@@ -1,0 +1,20 @@
+# IntelliJ
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+
+# Node
+node_modules/
+.next/
+
+# Java
+target/
+
+# Env
+.env
+
+# OS
+.DS_Store
+Thumbs.db
