@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { incomeApi, propertyApi } from '@/lib/api';
 import type { Income, IncomeForm, Property } from '@/types';
 import Modal from '@/components/Modal';
+import ResponsiveTable from '@/components/ResponsiveTable';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -47,45 +48,46 @@ export default function IncomesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Ingresos</h1>
-        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-          <Plus size={16} /> Nuevo
+        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
+          <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left">
-            <tr>
-              <th className="p-3 font-medium">Fecha</th>
-              <th className="p-3 font-medium">Descripción</th>
-              <th className="p-3 font-medium">Propiedad</th>
-              <th className="p-3 font-medium">Tipo</th>
-              <th className="p-3 font-medium">Método</th>
-              <th className="p-3 font-medium text-right">Monto</th>
-              <th className="p-3 font-medium w-24">Acción</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {items.length === 0 && <tr><td colSpan={7} className="p-6 text-center text-gray-500">Sin ingresos</td></tr>}
-            {items.map((item) => (
-              <tr key={item.id} className="hover:bg-gray-50">
-                <td className="p-3">{format(new Date(item.incomeDate), 'dd/MM/yyyy')}</td>
-                <td className="p-3">{item.description}</td>
-                <td className="p-3 text-gray-600">{item.propertyName || '-'}</td>
-                <td className="p-3"><span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{item.incomeType}</span></td>
-                <td className="p-3 text-gray-600">{item.paymentMethod || '-'}</td>
-                <td className="p-3 text-right font-medium text-green-600">${item.amount.toLocaleString()}</td>
-                <td className="p-3">
-                  <div className="flex gap-1">
-                    <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
-                    <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveTable
+        columns={[
+          { key: 'date', label: 'Fecha', render: (item) => format(new Date(item.incomeDate), 'dd/MM/yyyy') },
+          { key: 'desc', label: 'Descripción', render: (item) => item.description },
+          { key: 'property', label: 'Propiedad', render: (item) => <span className="text-gray-600">{item.propertyName || '-'}</span> },
+          { key: 'type', label: 'Tipo', render: (item) => <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{item.incomeType}</span> },
+          { key: 'method', label: 'Método', render: (item) => <span className="text-gray-600">{item.paymentMethod || '-'}</span> },
+          { key: 'amount', label: 'Monto', render: (item) => <span className="font-medium text-green-600">${item.amount.toLocaleString()}</span> },
+          { key: 'actions', label: 'Acción', render: (item) => (
+            <div className="flex gap-1">
+              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
+              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+            </div>
+          )},
+        ]}
+        data={items}
+        emptyMessage="Sin ingresos"
+        mobileCard={(item) => (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm font-medium truncate">{item.description}</span>
+              <span className="font-medium text-green-600 shrink-0">${item.amount.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+              <span>{format(new Date(item.incomeDate), 'dd/MM/yyyy')}</span>
+              <span>{item.propertyName || '-'}</span>
+              <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">{item.incomeType}</span>
+            </div>
+            <div className="flex justify-end gap-1 pt-1 border-t">
+              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
+              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+            </div>
+          </>
+        )}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar ingreso' : 'Nuevo ingreso'}>
         <div className="space-y-4">

@@ -59,61 +59,63 @@ export default function PropertiesPage() {
     if (confirm('¿Eliminar esta propiedad?')) { await propertyApi.delete(id); load(); }
   };
 
-  if (loading) return <div className="text-gray-500">Cargando...</div>;
+  if (loading) return <div className="text-gray-500 text-sm text-center py-12">Cargando...</div>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Propiedades</h1>
-        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-          <Plus size={16} /> Nueva
+        <h1 className="text-xl md:text-2xl font-bold">Propiedades</h1>
+        <button onClick={openCreate} className="flex items-center gap-1.5 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
+          <Plus size={16} /> <span className="hidden sm:inline">Nueva</span>
         </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {items.length === 0 && <div className="col-span-full text-center text-gray-500 py-12">Sin propiedades</div>}
         {items.map((item) => (
-          <div key={item.id} className="bg-white rounded-xl border p-5 space-y-3 hover:shadow-sm transition-shadow">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="font-semibold text-lg">{item.name}</h3>
-                <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5"><MapPin size={13} />{item.address}{item.city ? `, ${item.city}` : ''}</p>
+          <div key={item.id} className="bg-white rounded-xl border p-4 md:p-5 space-y-3 hover:shadow-sm transition-shadow">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h3 className="font-semibold text-base md:text-lg truncate">{item.name}</h3>
+                <p className="text-xs md:text-sm text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                  <MapPin size={12} className="shrink-0" />{item.address}{item.city ? `, ${item.city}` : ''}
+                </p>
               </div>
-              <div className="flex gap-1">
-                <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
-                <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+              <div className="flex gap-1 shrink-0">
+                <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={14} /></button>
+                <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={14} /></button>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {item.propertyType && <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><Building2 size={12} />{labels[item.propertyType] || item.propertyType}</span>}
+            <div className="flex flex-wrap gap-1.5">
+              {item.propertyType && <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><Building2 size={11} />{labels[item.propertyType] || item.propertyType}</span>}
               {item.condition && <span className="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">{labels[item.condition] || item.condition}</span>}
             </div>
 
-            <div className="flex gap-4 text-sm text-gray-600">
-              {item.areaM2 && <span className="flex items-center gap-1"><Ruler size={14} />{item.areaM2} m²</span>}
-              {item.bedrooms != null && <span className="flex items-center gap-1"><BedDouble size={14} />{item.bedrooms} hab</span>}
-              {item.bathrooms != null && <span className="flex items-center gap-1"><Bath size={14} />{item.bathrooms} baños</span>}
+            <div className="flex gap-3 md:gap-4 text-xs md:text-sm text-gray-600 flex-wrap">
+              {item.areaM2 && <span className="flex items-center gap-1"><Ruler size={13} />{item.areaM2} m²</span>}
+              {item.bedrooms != null && <span className="flex items-center gap-1"><BedDouble size={13} />{item.bedrooms} hab</span>}
+              {item.bathrooms != null && <span className="flex items-center gap-1"><Bath size={13} />{item.bathrooms} baños</span>}
             </div>
 
             <div className="flex gap-3 text-xs">
-              {item.hasElevator != null && <span className="flex items-center gap-1">{item.hasElevator ? <Check size={13} className="text-green-600" /> : <X size={13} className="text-red-400" />} Ascensor</span>}
-              {item.hasParking != null && <span className="flex items-center gap-1">{item.hasParking ? <Check size={13} className="text-green-600" /> : <X size={13} className="text-red-400" />} Garaje</span>}
+              {item.hasElevator != null && <span className="flex items-center gap-1">{item.hasElevator ? <Check size={12} className="text-green-600" /> : <X size={12} className="text-red-400" />} Ascensor</span>}
+              {item.hasParking != null && <span className="flex items-center gap-1">{item.hasParking ? <Check size={12} className="text-green-600" /> : <X size={12} className="text-red-400" />} Garaje</span>}
             </div>
 
-            {item.description && <p className="text-sm text-gray-500 line-clamp-2">{item.description}</p>}
+            {item.description && <p className="text-xs md:text-sm text-gray-500 line-clamp-2">{item.description}</p>}
           </div>
         ))}
       </div>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar propiedad' : 'Nueva propiedad'}>
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="sm:col-span-2">
               <label className="block text-sm font-medium mb-1">Nombre *</label>
               <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-sm font-medium mb-1">Dirección *</label>
               <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
             </div>
@@ -129,7 +131,7 @@ export default function PropertiesPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Metros cuadrados</label>
+              <label className="block text-sm font-medium mb-1">m²</label>
               <input type="number" value={form.areaM2 ?? ''} onChange={e => setForm({ ...form, areaM2: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
@@ -159,7 +161,7 @@ export default function PropertiesPage() {
                 Garaje
               </label>
             </div>
-            <div className="col-span-2">
+            <div className="sm:col-span-2">
               <label className="block text-sm font-medium mb-1">Descripción</label>
               <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} />
             </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { taskApi, propertyApi } from '@/lib/api';
 import type { Task, TaskForm, Property } from '@/types';
 import Modal from '@/components/Modal';
+import ResponsiveTable from '@/components/ResponsiveTable';
 import { Plus, Pencil, Trash2, CheckCircle, Circle } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -54,61 +55,73 @@ export default function TasksPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Tareas</h1>
-        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-          <Plus size={16} /> Nueva
+        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
+          <Plus size={16} /> <span className="hidden sm:inline">Nueva</span>
         </button>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {['all', 'pending', 'done'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${filter === f ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-gray-50'}`}>
+          <button key={f} onClick={() => setFilter(f)} className={`shrink-0 px-3 py-1.5 text-sm rounded-lg border transition-colors ${filter === f ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-gray-50'}`}>
             {f === 'all' ? 'Todas' : f === 'pending' ? 'Pendientes' : 'Completadas'}
           </button>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left">
-            <tr>
-              <th className="p-3 w-10"></th>
-              <th className="p-3 font-medium">Título</th>
-              <th className="p-3 font-medium">Propiedad</th>
-              <th className="p-3 font-medium">Prioridad</th>
-              <th className="p-3 font-medium">Vence</th>
-              <th className="p-3 font-medium w-24">Acción</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {filtered.length === 0 && <tr><td colSpan={6} className="p-6 text-center text-gray-500">Sin tareas</td></tr>}
-            {filtered.map((item) => (
-              <tr key={item.id} className={`hover:bg-gray-50 ${item.completed ? 'opacity-60' : ''}`}>
-                <td className="p-3">
-                  <button onClick={() => toggle(item.id)} className="text-blue-600 hover:text-blue-800">
-                    {item.completed ? <CheckCircle size={18} /> : <Circle size={18} />}
-                  </button>
-                </td>
-                <td className={`p-3 font-medium ${item.completed ? 'line-through' : ''}`}>{item.title}</td>
-                <td className="p-3 text-gray-600">{item.propertyName || '-'}</td>
-                <td className="p-3">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    item.priority === 'HIGH' ? 'bg-red-50 text-red-700' :
-                    item.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700' :
-                    'bg-green-50 text-green-700'
-                  }`}>{item.priority}</span>
-                </td>
-                <td className="p-3 text-gray-600">{item.dueDate ? format(new Date(item.dueDate), 'dd/MM/yyyy') : '-'}</td>
-                <td className="p-3">
-                  <div className="flex gap-1">
-                    <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
-                    <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveTable
+        columns={[
+          { key: 'toggle', label: '', render: (item) => (
+            <button onClick={() => toggle(item.id)} className="text-blue-600 hover:text-blue-800">
+              {item.completed ? <CheckCircle size={18} /> : <Circle size={18} />}
+            </button>
+          )},
+          { key: 'title', label: 'Título', render: (item) => (
+            <span className={`font-medium ${item.completed ? 'line-through opacity-60' : ''}`}>{item.title}</span>
+          )},
+          { key: 'property', label: 'Propiedad', render: (item) => <span className="text-gray-600">{item.propertyName || '-'}</span> },
+          { key: 'priority', label: 'Prioridad', render: (item) => (
+            <span className={`text-xs px-2 py-0.5 rounded-full ${
+              item.priority === 'HIGH' ? 'bg-red-50 text-red-700' :
+              item.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700' :
+              'bg-green-50 text-green-700'
+            }`}>{item.priority}</span>
+          )},
+          { key: 'dueDate', label: 'Vence', render: (item) => <span className="text-gray-600">{item.dueDate ? format(new Date(item.dueDate), 'dd/MM/yyyy') : '-'}</span> },
+          { key: 'actions', label: 'Acción', render: (item) => (
+            <div className="flex gap-1">
+              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
+              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+            </div>
+          )},
+        ]}
+        data={filtered}
+        emptyMessage="Sin tareas"
+        mobileCard={(item) => (
+          <>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <button onClick={() => toggle(item.id)} className="text-blue-600 hover:text-blue-800 shrink-0">
+                  {item.completed ? <CheckCircle size={18} /> : <Circle size={18} />}
+                </button>
+                <span className={`text-sm font-medium truncate ${item.completed ? 'line-through opacity-60' : ''}`}>{item.title}</span>
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                item.priority === 'HIGH' ? 'bg-red-50 text-red-700' :
+                item.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700' :
+                'bg-green-50 text-green-700'
+              }`}>{item.priority}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span>{item.propertyName || '-'}</span>
+              {item.dueDate && <span>Vence: {format(new Date(item.dueDate), 'dd/MM/yyyy')}</span>}
+            </div>
+            <div className="flex justify-end gap-1 pt-1 border-t">
+              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
+              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+            </div>
+          </>
+        )}
+      />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar tarea' : 'Nueva tarea'}>
         <div className="space-y-4">
