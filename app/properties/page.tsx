@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { propertyApi } from '@/lib/api';
 import type { Property, PropertyForm } from '@/types';
 import Modal from '@/components/Modal';
-import { Plus, Pencil, Trash2, Building2, MapPin, Ruler, BedDouble, Bath, Check, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, MapPin, Ruler, BedDouble, Bath, Check, X, Home } from 'lucide-react';
+import { SkeletonCard } from '@/components/Skeleton';
 
 const propertyTypes = ['APARTMENT', 'HOUSE', 'LOCAL', 'OFFICE', 'GARAGE', 'OTHER'] as const;
 const conditions = ['READY_TO_MOVE', 'NEEDS_RENOVATION', 'UNDER_RENOVATION'] as const;
@@ -59,7 +60,14 @@ export default function PropertiesPage() {
     if (confirm('¿Eliminar esta propiedad?')) { await propertyApi.delete(id); load(); }
   };
 
-  if (loading) return <div className="text-gray-500 text-sm text-center py-12">Cargando...</div>;
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse-skeleton" />
+      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+        {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -71,28 +79,33 @@ export default function PropertiesPage() {
       </div>
 
       <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
-        {items.length === 0 && <div className="col-span-full text-center text-gray-500 py-12">Sin propiedades</div>}
+        {items.length === 0 && (
+          <div className="col-span-full flex flex-col items-center justify-center py-12 text-gray-400">
+            <Home size={48} className="mb-3" />
+            <p className="text-sm">Sin propiedades</p>
+          </div>
+        )}
         {items.map((item) => (
-          <div key={item.id} className="bg-white rounded-xl border p-4 md:p-5 space-y-3 hover:shadow-sm transition-shadow">
+          <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4 md:p-5 space-y-3 card-hover">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="font-semibold text-base md:text-lg truncate">{item.name}</h3>
-                <p className="text-xs md:text-sm text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
                   <MapPin size={12} className="shrink-0" />{item.address}{item.city ? `, ${item.city}` : ''}
                 </p>
               </div>
               <div className="flex gap-1 shrink-0">
-                <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={14} /></button>
+                <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={14} /></button>
                 <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={14} /></button>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-1.5">
-              {item.propertyType && <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><Building2 size={11} />{labels[item.propertyType] || item.propertyType}</span>}
-              {item.condition && <span className="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">{labels[item.condition] || item.condition}</span>}
+              {item.propertyType && <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-0.5 rounded-full flex items-center gap-1"><Building2 size={11} />{labels[item.propertyType] || item.propertyType}</span>}
+              {item.condition && <span className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs px-2 py-0.5 rounded-full">{labels[item.condition] || item.condition}</span>}
             </div>
 
-            <div className="flex gap-3 md:gap-4 text-xs md:text-sm text-gray-600 flex-wrap">
+            <div className="flex gap-3 md:gap-4 text-xs md:text-sm text-gray-600 dark:text-gray-300 flex-wrap">
               {item.areaM2 && <span className="flex items-center gap-1"><Ruler size={13} />{item.areaM2} m²</span>}
               {item.bedrooms != null && <span className="flex items-center gap-1"><BedDouble size={13} />{item.bedrooms} hab</span>}
               {item.bathrooms != null && <span className="flex items-center gap-1"><Bath size={13} />{item.bathrooms} baños</span>}
@@ -103,7 +116,7 @@ export default function PropertiesPage() {
               {item.hasParking != null && <span className="flex items-center gap-1">{item.hasParking ? <Check size={12} className="text-green-600" /> : <X size={12} className="text-red-400" />} Garaje</span>}
             </div>
 
-            {item.description && <p className="text-xs md:text-sm text-gray-500 line-clamp-2">{item.description}</p>}
+            {item.description && <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{item.description}</p>}
           </div>
         ))}
       </div>
@@ -150,13 +163,13 @@ export default function PropertiesPage() {
               <input type="number" value={form.bathrooms ?? ''} onChange={e => setForm({ ...form, bathrooms: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="flex items-center gap-2 text-sm border rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gray-50">
+              <label className="flex items-center gap-2 text-sm border dark:border-gray-600 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                 <input type="checkbox" checked={form.hasElevator === true} onChange={e => setForm({ ...form, hasElevator: e.target.checked || (form.hasElevator === false ? null : true) })} />
                 Ascensor
               </label>
             </div>
             <div>
-              <label className="flex items-center gap-2 text-sm border rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gray-50">
+              <label className="flex items-center gap-2 text-sm border dark:border-gray-600 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                 <input type="checkbox" checked={form.hasParking === true} onChange={e => setForm({ ...form, hasParking: e.target.checked || (form.hasParking === false ? null : true) })} />
                 Garaje
               </label>
@@ -166,8 +179,8 @@ export default function PropertiesPage() {
               <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} />
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2 border-t">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+          <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
+            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
             <button onClick={save} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
           </div>
         </div>

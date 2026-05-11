@@ -5,7 +5,8 @@ import { expenseApi, propertyApi } from '@/lib/api';
 import type { Expense, ExpenseForm, Property } from '@/types';
 import Modal from '@/components/Modal';
 import ResponsiveTable from '@/components/ResponsiveTable';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, TrendingDown } from 'lucide-react';
+import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
 
 const categories = ['REPAIR', 'MAINTENANCE', 'TAXES', 'UTILITIES', 'INSURANCE', 'CLEANING', 'COMMISSION', 'LEGAL', 'ADMINISTRATION', 'OTHER'] as const;
@@ -16,7 +17,7 @@ export default function ExpensesPage() {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
-  const [form, setForm] = useState<ExpenseForm>({ propertyId: null, amount: 0, description: '', expenseDate: '', category: 'MAINTENANCE' });
+  const [form, setForm] = useState<ExpenseForm>({ propertyId: null, amount: null, description: '', expenseDate: '', category: 'MAINTENANCE' });
 
   const load = async () => {
     const [e, p] = await Promise.all([expenseApi.getAll(), propertyApi.getAll()]);
@@ -27,12 +28,14 @@ export default function ExpensesPage() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => { setEditing(null); setForm({ propertyId: null, amount: 0, description: '', expenseDate: new Date().toISOString().slice(0, 10), category: 'MAINTENANCE' }); setModalOpen(true); };
+  const openCreate = () => { setEditing(null); setForm({ propertyId: null, amount: null, description: '', expenseDate: new Date().toISOString().slice(0, 10), category: 'MAINTENANCE' }); setModalOpen(true); };
   const openEdit = (item: Expense) => { setEditing(item); setForm({ propertyId: item.propertyId, amount: item.amount, description: item.description, expenseDate: item.expenseDate, category: item.category }); setModalOpen(true); };
 
   const save = async () => {
-    if (editing) await expenseApi.update(editing.id, form);
-    else await expenseApi.create(form);
+    if (form.amount === null) return alert('El monto es obligatorio');
+    const data = { ...form, amount: form.amount as number };
+    if (editing) await expenseApi.update(editing.id, data);
+    else await expenseApi.create(data);
     setModalOpen(false);
     load();
   };
@@ -41,7 +44,12 @@ export default function ExpensesPage() {
     if (confirm('¿Eliminar este gasto?')) { await expenseApi.delete(id); load(); }
   };
 
-  if (loading) return <div className="text-gray-500">Cargando...</div>;
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse-skeleton" />
+      <SkeletonTable />
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -98,7 +106,7 @@ export default function ExpensesPage() {
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Monto</label>
-            <input type="number" value={form.amount} onChange={e => setForm({ ...form, amount: Number(e.target.value) })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+            <input type="number" value={form.amount ?? ''} onChange={e => setForm({ ...form, amount: e.target.value === '' ? null : Number(e.target.value) })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Descripción</label>
@@ -114,8 +122,8 @@ export default function ExpensesPage() {
               {categories.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+          <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
+            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
             <button onClick={save} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
           </div>
         </div>

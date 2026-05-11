@@ -44,7 +44,7 @@ export interface Income {
 
 export interface IncomeForm {
   propertyId: number | null;
-  amount: number;
+  amount: number | null;
   description: string;
   incomeDate: string;
   incomeType: 'RENT' | 'DEPOSIT' | 'LATE_FEE' | 'OTHER';
@@ -65,7 +65,7 @@ export interface Expense {
 
 export interface ExpenseForm {
   propertyId: number | null;
-  amount: number;
+  amount: number | null;
   description: string;
   expenseDate: string;
   category: 'REPAIR' | 'MAINTENANCE' | 'TAXES' | 'UTILITIES' | 'INSURANCE' | 'CLEANING' | 'COMMISSION' | 'LEGAL' | 'ADMINISTRATION' | 'OTHER';
@@ -117,6 +117,13 @@ export interface TaskForm {
   completed: boolean;
   dueDate: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface ContactMessageForm {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
 }
 
 export interface DashboardSummary {

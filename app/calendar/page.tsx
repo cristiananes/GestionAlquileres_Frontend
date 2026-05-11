@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { calendarEventApi, propertyApi } from '@/lib/api';
 import type { CalendarEvent, CalendarEventForm, Property } from '@/types';
 import Modal from '@/components/Modal';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Calendar as CalendarIcon } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, startOfWeek, endOfWeek } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -73,7 +73,19 @@ export default function CalendarPage() {
     if (window.innerWidth >= 768) openCreate(day);
   };
 
-  if (loading) return <div className="text-gray-500">Cargando...</div>;
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse-skeleton" />
+      <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-full animate-pulse-skeleton" />
+      <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4 animate-pulse-skeleton">
+        <div className="grid grid-cols-7 gap-1">
+          {[...Array(35)].map((_, i) => (
+            <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -85,13 +97,13 @@ export default function CalendarPage() {
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="px-2 md:px-3 py-1.5 text-xs md:text-sm border rounded-lg hover:bg-gray-50 shrink-0">&larr; <span className="hidden sm:inline">Anterior</span></button>
+        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))} className="px-2 md:px-3 py-1.5 text-xs md:text-sm border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 shrink-0">&larr; <span className="hidden sm:inline">Anterior</span></button>
         <h2 className="text-sm md:text-lg font-semibold text-center truncate">{format(currentMonth, "MMMM yyyy", { locale: es })}</h2>
-        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="px-2 md:px-3 py-1.5 text-xs md:text-sm border rounded-lg hover:bg-gray-50 shrink-0"><span className="hidden sm:inline">Siguiente</span> &rarr;</button>
+        <button onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))} className="px-2 md:px-3 py-1.5 text-xs md:text-sm border dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 shrink-0"><span className="hidden sm:inline">Siguiente</span> &rarr;</button>
       </div>
 
-      <div className="bg-white rounded-xl border overflow-hidden">
-        <div className="grid grid-cols-7 bg-gray-50 text-center text-[10px] md:text-sm font-medium">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden">
+        <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 text-center text-[10px] md:text-sm font-medium">
           {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => <div key={d} className="p-1 md:p-2 border-b">{d}</div>)}
         </div>
         <div className="grid grid-cols-7">
@@ -104,7 +116,7 @@ export default function CalendarPage() {
                 onClick={() => handleDayClick(day)}
                 className={`min-h-[36px] md:min-h-[100px] p-0.5 md:p-1.5 border-b border-r text-xs md:text-sm cursor-pointer transition-colors hover:bg-blue-50 ${
                   !isSameMonth(day, currentMonth) ? 'text-gray-300' : ''
-                } ${isToday(day) ? 'bg-blue-50' : ''} ${isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
+                } ${isToday(day) ? 'bg-blue-50 dark:bg-blue-900/30' : ''} ${isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
               >
                 <span className={`inline-flex items-center justify-center w-6 h-6 md:w-7 md:h-7 text-[10px] md:text-xs rounded-full ${
                   isToday(day) ? 'bg-blue-600 text-white font-bold' : ''
@@ -138,7 +150,7 @@ export default function CalendarPage() {
 
       {/* Mobile: selected day events list */}
       {selectedDay && (
-        <div className="md:hidden bg-white rounded-xl border p-4 space-y-3">
+        <div className="md:hidden bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-sm">
               {format(selectedDay, "d 'de' MMMM", { locale: es })}
@@ -148,21 +160,24 @@ export default function CalendarPage() {
             </button>
           </div>
           {getEventsForDay(selectedDay).length === 0 ? (
-            <p className="text-sm text-gray-500">Sin eventos</p>
+            <div className="flex flex-col items-center justify-center py-4 text-gray-400">
+              <CalendarIcon size={24} className="mb-1" />
+              <p className="text-sm">Sin eventos</p>
+            </div>
           ) : (
             <div className="space-y-2">
               {getEventsForDay(selectedDay).map(ev => (
-                <div key={ev.id} onClick={() => openEdit(ev)} className="flex items-center gap-2 p-2 rounded-lg border text-sm cursor-pointer hover:bg-gray-50">
+                <div key={ev.id} onClick={() => openEdit(ev)} className="flex items-center gap-2 p-2 rounded-lg border dark:border-gray-700 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ev.color || '#3b82f6' }} />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{ev.title}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {format(new Date(ev.startDateTime), 'HH:mm')} &middot; {ev.eventType}
                     </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={(e) => { e.stopPropagation(); openEdit(ev); }} className="p-1 hover:bg-gray-100 rounded"><Pencil size={14} /></button>
-                    <button onClick={(e) => { e.stopPropagation(); remove(ev.id); }} className="p-1 hover:bg-red-50 text-red-500 rounded"><Trash2 size={14} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); openEdit(ev); }} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded"><Pencil size={14} /></button>
+                    <button onClick={(e) => { e.stopPropagation(); remove(ev.id); }} className="p-1 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded"><Trash2 size={14} /></button>
                   </div>
                 </div>
               ))}
@@ -214,8 +229,8 @@ export default function CalendarPage() {
             <input type="checkbox" checked={form.allDay} onChange={e => setForm({ ...form, allDay: e.target.checked })} className="rounded" />
             Todo el día
           </label>
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+          <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
+            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
             <button onClick={save} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
           </div>
         </div>

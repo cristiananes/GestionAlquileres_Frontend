@@ -5,7 +5,8 @@ import { taskApi, propertyApi } from '@/lib/api';
 import type { Task, TaskForm, Property } from '@/types';
 import Modal from '@/components/Modal';
 import ResponsiveTable from '@/components/ResponsiveTable';
-import { Plus, Pencil, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Plus, Pencil, Trash2, CheckCircle, Circle, CheckSquare } from 'lucide-react';
+import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
 
 const priorities = ['LOW', 'MEDIUM', 'HIGH'] as const;
@@ -49,7 +50,12 @@ export default function TasksPage() {
 
   const filtered = filter === 'all' ? items : items.filter(t => filter === 'done' ? t.completed : !t.completed);
 
-  if (loading) return <div className="text-gray-500">Cargando...</div>;
+  if (loading) return (
+    <div className="space-y-4">
+      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse-skeleton" />
+      <SkeletonTable />
+    </div>
+  );
 
   return (
     <div className="space-y-4">
@@ -62,7 +68,7 @@ export default function TasksPage() {
 
       <div className="flex gap-2 overflow-x-auto pb-1">
         {['all', 'pending', 'done'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} className={`shrink-0 px-3 py-1.5 text-sm rounded-lg border transition-colors ${filter === f ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-gray-50'}`}>
+          <button key={f} onClick={() => setFilter(f)} className={`shrink-0 px-3 py-1.5 text-sm rounded-lg border dark:border-gray-600 transition-colors ${filter === f ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600'}`}>
             {f === 'all' ? 'Todas' : f === 'pending' ? 'Pendientes' : 'Completadas'}
           </button>
         ))}
@@ -152,8 +158,8 @@ export default function TasksPage() {
               <input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50">Cancelar</button>
+          <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
+            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
             <button onClick={save} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
           </div>
         </div>

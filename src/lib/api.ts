@@ -5,12 +5,23 @@ import type {
   Expense, ExpenseForm,
   CalendarEvent, CalendarEventForm,
   Task, TaskForm,
-  DashboardSummary
+  DashboardSummary,
+  ContactMessageForm
 } from '@/types';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
   headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
 });
 
 export const propertyApi = {
@@ -56,6 +67,21 @@ export const taskApi = {
   update: (id: number, data: TaskForm) => api.put<Task>(`/tasks/${id}`, data).then(r => r.data),
   toggle: (id: number) => api.patch<Task>(`/tasks/${id}/toggle`).then(r => r.data),
   delete: (id: number) => api.delete(`/tasks/${id}`),
+};
+
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post<{ token: string; userId: number; name: string; email: string; role: string }>('/auth/login', { email, password }),
+  register: (name: string, email: string, password: string) =>
+    api.post<{ token: string; userId: number; name: string; email: string; role: string }>('/auth/register', { name, email, password }),
+};
+
+export const contactApi = {
+  send: (data: ContactMessageForm) => api.post('/contact', data),
+};
+
+export const feedbackApi = {
+  send: (data: ContactMessageForm) => api.post('/feedback', data),
 };
 
 export const dashboardApi = {

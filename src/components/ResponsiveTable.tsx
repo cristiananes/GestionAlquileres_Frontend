@@ -16,23 +16,23 @@ interface Props<T> {
 
 export default function ResponsiveTable<T>({ columns, data, emptyMessage = "Sin datos", mobileCard }: Props<T>) {
   if (data.length === 0) {
-    return <p className="text-center text-gray-500 py-12">{emptyMessage}</p>;
+    return <p className="text-center text-gray-500 dark:text-gray-400 py-12">{emptyMessage}</p>;
   }
 
   return (
     <>
-      <div className="hidden md:block bg-white rounded-xl border overflow-hidden">
+      <div className="hidden md:block bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left">
+          <thead className="bg-gray-50 dark:bg-gray-700 text-left">
             <tr>
               {columns.map(col => (
                 <th key={col.key} className="p-3 font-medium">{col.label}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y dark:divide-gray-700">
             {data.map((item, i) => (
-              <tr key={i} className="hover:bg-gray-50">
+              <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                 {columns.map(col => (
                   <td key={col.key} className={`p-3 ${col.hideOnMobile ? 'hidden' : ''}`}>
                     {col.render(item)}
@@ -46,7 +46,7 @@ export default function ResponsiveTable<T>({ columns, data, emptyMessage = "Sin 
 
       <div className="md:hidden space-y-3">
         {data.map((item, i) => (
-          <div key={i} className="bg-white rounded-xl border p-4 space-y-2">
+          <div key={i} className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4 space-y-2">
             {mobileCard(item)}
           </div>
         ))}
