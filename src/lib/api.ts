@@ -33,10 +33,10 @@ export const propertyApi = {
   uploadImage: (id: number, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
-    return api.post<Property>(`/properties/${id}/image`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }).then(r => r.data);
+    return api.post<Property>(`/properties/${id}/image`, formData).then(r => r.data);
   },
+  deleteImage: (id: number, imageId: number) =>
+    api.delete<Property>(`/properties/${id}/images/${imageId}`).then(r => r.data),
 };
 
 export const incomeApi = {

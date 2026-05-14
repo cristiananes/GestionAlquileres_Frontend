@@ -12,6 +12,7 @@ export interface Property {
   hasParking: boolean | null;
   description: string;
   imageUrl: string;
+  images: string[];
   createdAt: string;
   updatedAt: string;
 }
