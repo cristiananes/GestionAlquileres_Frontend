@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { propertyApi } from '@/lib/api';
 import type { Property, PropertyForm } from '@/types';
 import Modal from '@/components/Modal';
-import { Plus, Pencil, Trash2, Building2, MapPin, Ruler, BedDouble, Bath, Check, X, Home } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, MapPin, Ruler, BedDouble, Bath, Check, X, Home, ImageIcon } from 'lucide-react';
 import { SkeletonCard } from '@/components/Skeleton';
 
 const propertyTypes = ['APARTMENT', 'HOUSE', 'LOCAL', 'OFFICE', 'GARAGE', 'OTHER'] as const;
@@ -24,8 +24,12 @@ export default function PropertiesPage() {
   const [form, setForm] = useState<PropertyForm>({
     name: '', address: '', city: '', propertyType: '',
     areaM2: null, bedrooms: null, bathrooms: null, condition: '',
-    hasElevator: null, hasParking: null, description: '',
+    hasElevator: null, hasParking: null, description: '', imageUrl: '',
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = () => propertyApi.getAll().then(setItems).finally(() => setLoading(false));
 
@@ -33,7 +37,9 @@ export default function PropertiesPage() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: '', address: '', city: '', propertyType: '', areaM2: null, bedrooms: null, bathrooms: null, condition: '', hasElevator: null, hasParking: null, description: '' });
+    setForm({ name: '', address: '', city: '', propertyType: '', areaM2: null, bedrooms: null, bathrooms: null, condition: '', hasElevator: null, hasParking: null, description: '', imageUrl: '' });
+    setSelectedFile(null);
+    setPreviewUrl(null);
     setModalOpen(true);
   };
 
@@ -45,15 +51,31 @@ export default function PropertiesPage() {
       bedrooms: item.bedrooms, bathrooms: item.bathrooms,
       condition: item.condition || '', hasElevator: item.hasElevator,
       hasParking: item.hasParking, description: item.description || '',
+      imageUrl: item.imageUrl || '',
     });
+    setSelectedFile(null);
+    setPreviewUrl(null);
     setModalOpen(true);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setSelectedFile(file);
+    setPreviewUrl(file ? URL.createObjectURL(file) : null);
+  };
+
   const save = async () => {
-    if (editing) await propertyApi.update(editing.id, form);
-    else await propertyApi.create(form);
-    setModalOpen(false);
-    load();
+    setUploading(true);
+    try {
+      let property: Property;
+      if (editing) property = await propertyApi.update(editing.id, form);
+      else property = await propertyApi.create(form);
+      if (selectedFile) await propertyApi.uploadImage(property.id, selectedFile);
+      setModalOpen(false);
+      load();
+    } finally {
+      setUploading(false);
+    }
   };
 
   const remove = async (id: number) => {
@@ -86,8 +108,16 @@ export default function PropertiesPage() {
           </div>
         )}
         {items.map((item) => (
-          <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4 md:p-5 space-y-3 card-hover">
-            <div className="flex items-start justify-between gap-2">
+          <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden card-hover">
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt={item.name} className="w-full h-40 object-cover" />
+            ) : (
+              <div className="w-full h-40 bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-400">
+                <Building2 size={32} />
+              </div>
+            )}
+            <div className="p-4 md:p-5 space-y-3">
+              <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h3 className="font-semibold text-base md:text-lg truncate">{item.name}</h3>
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
@@ -117,6 +147,7 @@ export default function PropertiesPage() {
             </div>
 
             {item.description && <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{item.description}</p>}
+          </div>
           </div>
         ))}
       </div>
@@ -178,10 +209,23 @@ export default function PropertiesPage() {
               <label className="block text-sm font-medium mb-1">Descripción</label>
               <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} />
             </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium mb-1">Imagen</label>
+              <div className="flex items-center gap-3">
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 border dark:border-gray-600 rounded-lg px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <ImageIcon size={16} /> {selectedFile ? 'Cambiar imagen' : 'Seleccionar imagen'}
+                </button>
+                {selectedFile && <span className="text-xs text-gray-500 truncate max-w-[200px]">{selectedFile.name}</span>}
+              </div>
+              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              {(previewUrl || (editing && editing.imageUrl)) && (
+                <img src={previewUrl || editing!.imageUrl} alt="Preview" className="mt-2 w-full h-32 object-cover rounded-lg border dark:border-gray-600" />
+              )}
+            </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
             <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
-            <button onClick={save} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
+            <button onClick={save} disabled={uploading} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{uploading ? 'Guardando...' : 'Guardar'}</button>
           </div>
         </div>
       </Modal>

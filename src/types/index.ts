@@ -11,6 +11,7 @@ export interface Property {
   hasElevator: boolean | null;
   hasParking: boolean | null;
   description: string;
+  imageUrl: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +28,7 @@ export interface PropertyForm {
   hasElevator: boolean | null;
   hasParking: boolean | null;
   description: string;
+  imageUrl: string;
 }
 
 export interface Income {

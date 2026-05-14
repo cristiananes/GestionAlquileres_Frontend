@@ -5,9 +5,10 @@ import { incomeApi, propertyApi } from '@/lib/api';
 import type { Income, IncomeForm, Property } from '@/types';
 import Modal from '@/components/Modal';
 import ResponsiveTable from '@/components/ResponsiveTable';
-import { Plus, Pencil, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Pencil, Trash2, DollarSign, FileDown } from 'lucide-react';
 import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
+import { reportApi } from '@/lib/api';
 
 const incomeTypes = ['RENT', 'DEPOSIT', 'LATE_FEE', 'OTHER'] as const;
 const paymentMethods = ['CASH', 'TRANSFER', 'CREDIT_CARD', 'DEBIT_CARD', 'CHECK', 'OTHER'] as const;
@@ -19,6 +20,9 @@ export default function IncomesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Income | null>(null);
   const [form, setForm] = useState<IncomeForm>({ propertyId: null, amount: null, description: '', incomeDate: '', incomeType: 'RENT', paymentMethod: 'TRANSFER' });
+  const [showPdfPicker, setShowPdfPicker] = useState(false);
+  const [pdfFrom, setPdfFrom] = useState('');
+  const [pdfTo, setPdfTo] = useState('');
 
   const load = async () => {
     const [i, p] = await Promise.all([incomeApi.getAll(), propertyApi.getAll()]);
@@ -41,6 +45,29 @@ export default function IncomesPage() {
     load();
   };
 
+  const downloadPDF = async () => {
+    try {
+      const blob = await reportApi.downloadIncomes(pdfFrom || undefined, pdfTo || undefined);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ingresos.pdf';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setShowPdfPicker(false);
+    } catch {
+      alert('Error al descargar el reporte');
+    }
+  };
+
+  const togglePdfPicker = () => {
+    setShowPdfPicker(!showPdfPicker);
+    if (!showPdfPicker) {
+      setPdfFrom('');
+      setPdfTo('');
+    }
+  };
+
   const remove = async (id: number) => {
     if (confirm('¿Eliminar este ingreso?')) { await incomeApi.delete(id); load(); }
   };
@@ -56,10 +83,29 @@ export default function IncomesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Ingresos</h1>
-        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
-          <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={togglePdfPicker} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shrink-0">
+            <FileDown size={16} /> <span className="hidden sm:inline">PDF</span>
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
+            <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
+          </button>
+        </div>
       </div>
+
+      {showPdfPicker && (
+        <div className="flex items-end gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">
+          <div>
+            <label className="block text-xs font-medium mb-1">Desde</label>
+            <input type="date" value={pdfFrom} onChange={e => setPdfFrom(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1">Hasta</label>
+            <input type="date" value={pdfTo} onChange={e => setPdfTo(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+          </div>
+          <button onClick={downloadPDF} className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">Descargar</button>
+        </div>
+      )}
 
       <ResponsiveTable
         columns={[

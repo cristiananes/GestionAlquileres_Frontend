@@ -5,9 +5,10 @@ import { expenseApi, propertyApi } from '@/lib/api';
 import type { Expense, ExpenseForm, Property } from '@/types';
 import Modal from '@/components/Modal';
 import ResponsiveTable from '@/components/ResponsiveTable';
-import { Plus, Pencil, Trash2, TrendingDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, TrendingDown, FileDown } from 'lucide-react';
 import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
+import { reportApi } from '@/lib/api';
 
 const categories = ['REPAIR', 'MAINTENANCE', 'TAXES', 'UTILITIES', 'INSURANCE', 'CLEANING', 'COMMISSION', 'LEGAL', 'ADMINISTRATION', 'OTHER'] as const;
 
@@ -18,6 +19,9 @@ export default function ExpensesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [form, setForm] = useState<ExpenseForm>({ propertyId: null, amount: null, description: '', expenseDate: '', category: 'MAINTENANCE' });
+  const [showPdfPicker, setShowPdfPicker] = useState(false);
+  const [pdfFrom, setPdfFrom] = useState('');
+  const [pdfTo, setPdfTo] = useState('');
 
   const load = async () => {
     const [e, p] = await Promise.all([expenseApi.getAll(), propertyApi.getAll()]);
@@ -40,6 +44,29 @@ export default function ExpensesPage() {
     load();
   };
 
+  const downloadPDF = async () => {
+    try {
+      const blob = await reportApi.downloadExpenses(pdfFrom || undefined, pdfTo || undefined);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'gastos.pdf';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      setShowPdfPicker(false);
+    } catch {
+      alert('Error al descargar el reporte');
+    }
+  };
+
+  const togglePdfPicker = () => {
+    setShowPdfPicker(!showPdfPicker);
+    if (!showPdfPicker) {
+      setPdfFrom('');
+      setPdfTo('');
+    }
+  };
+
   const remove = async (id: number) => {
     if (confirm('¿Eliminar este gasto?')) { await expenseApi.delete(id); load(); }
   };
@@ -55,10 +82,29 @@ export default function ExpensesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Gastos</h1>
-        <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
-          <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={togglePdfPicker} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shrink-0">
+            <FileDown size={16} /> <span className="hidden sm:inline">PDF</span>
+          </button>
+          <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
+            <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
+          </button>
+        </div>
       </div>
+
+      {showPdfPicker && (
+        <div className="flex items-end gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">
+          <div>
+            <label className="block text-xs font-medium mb-1">Desde</label>
+            <input type="date" value={pdfFrom} onChange={e => setPdfFrom(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium mb-1">Hasta</label>
+            <input type="date" value={pdfTo} onChange={e => setPdfTo(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+          </div>
+          <button onClick={downloadPDF} className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">Descargar</button>
+        </div>
+      )}
 
       <ResponsiveTable
         columns={[

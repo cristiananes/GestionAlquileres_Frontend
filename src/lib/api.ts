@@ -30,6 +30,13 @@ export const propertyApi = {
   create: (data: PropertyForm) => api.post<Property>('/properties', data).then(r => r.data),
   update: (id: number, data: PropertyForm) => api.put<Property>(`/properties/${id}`, data).then(r => r.data),
   delete: (id: number) => api.delete(`/properties/${id}`),
+  uploadImage: (id: number, file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<Property>(`/properties/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(r => r.data);
+  },
 };
 
 export const incomeApi = {
@@ -82,6 +89,13 @@ export const contactApi = {
 
 export const feedbackApi = {
   send: (data: ContactMessageForm) => api.post('/feedback', data),
+};
+
+export const reportApi = {
+  downloadIncomes: (from?: string, to?: string) =>
+    api.get('/reports/incomes', { params: { from, to }, responseType: 'blob' }).then(r => r.data),
+  downloadExpenses: (from?: string, to?: string) =>
+    api.get('/reports/expenses', { params: { from, to }, responseType: 'blob' }).then(r => r.data),
 };
 
 export const dashboardApi = {
