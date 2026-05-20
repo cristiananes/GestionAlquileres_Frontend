@@ -35,8 +35,8 @@ export const propertyApi = {
     formData.append('file', file);
     return api.post<Property>(`/properties/${id}/image`, formData).then(r => r.data);
   },
-  deleteImage: (id: number, imageId: number) =>
-    api.delete<Property>(`/properties/${id}/images/${imageId}`).then(r => r.data),
+  deleteImage: (id: number, imageUrl: string) =>
+    api.post<Property>(`/properties/${id}/images/delete`, { imageUrl }).then(r => r.data),
 };
 
 export const incomeApi = {

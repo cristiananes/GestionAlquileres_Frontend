@@ -66,11 +66,8 @@ export default function PropertiesPage() {
 
   const deleteExistingImage = async (imageUrl: string) => {
     if (!editing) return;
-    const imgIndex = editing.images?.indexOf(imageUrl) ?? -1;
-    if (imgIndex === -1) return;
-    const imageId = imgIndex + 1;
     try {
-      const updated = await propertyApi.deleteImage(editing.id, imageId);
+      const updated = await propertyApi.deleteImage(editing.id, imageUrl);
       setEditing(updated);
       setItems(prev => prev.map(p => p.id === updated.id ? updated : p));
     } catch {
@@ -247,9 +244,9 @@ export default function PropertiesPage() {
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium mb-1">Imágenes</label>
-              {editing && editing.images && editing.images.length > 0 && (
+              {editing && editing.images && editing.images.some(u => u) && (
                 <div className="grid grid-cols-3 gap-2 mb-3">
-                  {editing.images.map((url, i) => (
+                  {editing.images.filter(u => u).map((url, i) => (
                     <div key={i} className="relative group">
                       <img src={url} alt={`Imagen ${i + 1}`} className="w-full h-20 object-cover rounded-lg border dark:border-gray-600" />
                       <button onClick={() => deleteExistingImage(url)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
