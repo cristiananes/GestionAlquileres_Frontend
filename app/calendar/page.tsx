@@ -90,7 +90,7 @@ export default function CalendarPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Calendario</h1>
-        <button onClick={() => openCreate()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shrink-0">
+        <button aria-label="Nuevo evento" onClick={() => openCreate()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shrink-0">
           <Plus size={16} /> <span className="hidden sm:inline">Nuevo evento</span>
         </button>
       </div>
@@ -113,7 +113,7 @@ export default function CalendarPage() {
               <div
                 key={day.toISOString()}
                 onClick={() => handleDayClick(day)}
-                className={`min-h-[36px] md:min-h-[100px] p-0.5 md:p-1.5 border-b border-r text-xs md:text-sm cursor-pointer transition-colors hover:bg-blue-50 ${
+                className={`min-h-[36px] md:min-h-[100px] p-0.5 md:p-1.5 border-b border-r text-xs md:text-sm cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/30 ${
                   !isSameMonth(day, currentMonth) ? 'text-gray-300' : ''
                 } ${isToday(day) ? 'bg-blue-50 dark:bg-blue-900/30' : ''} ${isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
               >
@@ -170,8 +170,8 @@ export default function CalendarPage() {
                   <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ev.color || '#3b82f6' }} />
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{ev.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
-                      {format(new Date(ev.startDateTime), 'HH:mm')} &middot; {ev.eventType}
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {format(new Date(ev.startDateTime), 'HH:mm')} &middot; {eventLabels[ev.eventType]}
                     </p>
                   </div>
                   <div className="flex gap-1 shrink-0">

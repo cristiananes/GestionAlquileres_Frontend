@@ -140,7 +140,7 @@ export default function ExpensesPage() {
           )},
         ]}
         data={filtered}
-        emptyMessage="Sin registros para estos filtros. gastos"
+        emptyMessage="Sin gastos para los filtros seleccionados"
         mobileCard={(item) => (
           <>
             <div className="flex items-center justify-between gap-2">

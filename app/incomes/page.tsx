@@ -142,7 +142,7 @@ export default function IncomesPage() {
           )},
         ]}
         data={filtered}
-        emptyMessage="Sin registros para estos filtros. ingresos"
+        emptyMessage="Sin ingresos para los filtros seleccionados"
         mobileCard={(item) => (
           <>
             <div className="flex items-center justify-between gap-2">
