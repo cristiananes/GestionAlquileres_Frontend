@@ -50,7 +50,7 @@ export const propertyApi = {
   getById: (id: number) => api.get<Property>(`/properties/${id}`).then(r => r.data),
   create: (data: PropertyForm) => api.post<Property>('/properties', data).then(r => r.data),
   update: (id: number, data: PropertyForm) => api.put<Property>(`/properties/${id}`, data).then(r => r.data),
-  delete: (id: number) => api.delete(`/properties/${id}`),
+  delete: (id: number) => api.post(`/properties/${id}/archive`),
   uploadImage: (id: number, file: File) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -66,7 +66,7 @@ export const incomeApi = {
   getById: (id: number) => api.get<Income>(`/incomes/${id}`).then(r => r.data),
   create: (data: IncomeForm) => api.post<Income>('/incomes', data).then(r => r.data),
   update: (id: number, data: IncomeForm) => api.put<Income>(`/incomes/${id}`, data).then(r => r.data),
-  delete: (id: number) => api.delete(`/incomes/${id}`),
+  delete: (id: number) => api.post(`/incomes/${id}/archive`),
 };
 
 export const expenseApi = {
@@ -75,7 +75,7 @@ export const expenseApi = {
   getById: (id: number) => api.get<Expense>(`/expenses/${id}`).then(r => r.data),
   create: (data: ExpenseForm) => api.post<Expense>('/expenses', data).then(r => r.data),
   update: (id: number, data: ExpenseForm) => api.put<Expense>(`/expenses/${id}`, data).then(r => r.data),
-  delete: (id: number) => api.delete(`/expenses/${id}`),
+  delete: (id: number) => api.post(`/expenses/${id}/archive`),
 };
 
 export const calendarEventApi = {
@@ -84,7 +84,7 @@ export const calendarEventApi = {
   getById: (id: number) => api.get<CalendarEvent>(`/calendar-events/${id}`).then(r => r.data),
   create: (data: CalendarEventForm) => api.post<CalendarEvent>('/calendar-events', data).then(r => r.data),
   update: (id: number, data: CalendarEventForm) => api.put<CalendarEvent>(`/calendar-events/${id}`, data).then(r => r.data),
-  delete: (id: number) => api.delete(`/calendar-events/${id}`),
+  delete: (id: number) => api.post(`/calendar-events/${id}/archive`),
 };
 
 export const taskApi = {
@@ -94,7 +94,7 @@ export const taskApi = {
   create: (data: TaskForm) => api.post<Task>('/tasks', data).then(r => r.data),
   update: (id: number, data: TaskForm) => api.put<Task>(`/tasks/${id}`, data).then(r => r.data),
   toggle: (id: number) => api.patch<Task>(`/tasks/${id}/toggle`).then(r => r.data),
-  delete: (id: number) => api.delete(`/tasks/${id}`),
+  delete: (id: number) => api.post(`/tasks/${id}/archive`),
 };
 
 export const authApi = {
@@ -145,7 +145,7 @@ export const documentApi = {
 export type ArchiveKind = 'properties' | 'incomes' | 'expenses' | 'tasks' | 'calendar-events' | 'recurrences' | 'leases' | 'documents';
 export const archiveApi = {
   list: (kind: ArchiveKind) => api.get<unknown>(`/${kind}`, { params: { archived: true } }).then(r => confirmedArchivedEntries(r.data)),
-  archive: (kind: ArchiveKind, id: number) => api.delete(`/${kind}/${id}`),
+  archive: (kind: ArchiveKind, id: number) => api.post(`/${kind}/${id}/archive`),
   restore: (kind: ArchiveKind, id: number) => api.post(`/${kind}/${id}/restore`),
 };
 export function downloadBlob(blob: Blob, filename: string) {

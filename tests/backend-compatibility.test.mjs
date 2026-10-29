@@ -21,6 +21,7 @@ test('a failed legacy capability probe stops the write before dispatch', async (
 test('destructive actions, restores, filtered reports and new sections are gated', () => {
   assert.equal(requiredBackendFeature('/incomes/1', 'delete'), 'soft-archive');
   assert.equal(requiredBackendFeature('/properties/1/restore', 'post'), 'soft-archive');
+  assert.equal(requiredBackendFeature('/incomes/1/archive', 'post'), 'soft-archive');
   assert.equal(requiredBackendFeature('/incomes', 'get', true), 'soft-archive');
   assert.equal(requiredBackendFeature('/incomes', 'post'), 'safe-writes');
   assert.equal(requiredBackendFeature('/properties/1/investment'), 'investment');
