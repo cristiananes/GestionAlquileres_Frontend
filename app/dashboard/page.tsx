@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { dashboardApi } from '@/lib/api';
 import PeriodFilter from '@/components/PeriodFilter';
 import { DateRange, invalidRange } from '@/lib/period';
-import { formatCurrency } from '@/lib/presentation';
+import { formatBalanceRatio, formatCurrency } from '@/lib/presentation';
 import type { DashboardSummary } from '@/types';
 import { Euro, TrendingDown, Wallet, Building2, Clock, AlertCircle, Inbox } from 'lucide-react';
 import { SkeletonDashboardCards, SkeletonChart } from '@/components/Skeleton';
@@ -47,7 +47,7 @@ export default function DashboardPage() {
   ];
 
   const maxAmount = Math.max(data.totalIncomes, data.totalExpenses, 1);
-  const profitMargin = data.totalIncomes > 0 ? ((data.balance / data.totalIncomes) * 100).toFixed(1) : '0';
+  const balanceRatio = formatBalanceRatio(data.totalIncomes, data.balance);
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-sm md:text-base">Ingresos vs Gastos</h2>
           <span className={`text-xs font-medium ${data.balance >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-            Balance / ingresos: {profitMargin}%
+            Balance / ingresos: {balanceRatio}
           </span>
         </div>
         <div className="space-y-3">

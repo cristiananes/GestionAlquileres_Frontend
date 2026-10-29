@@ -3,6 +3,13 @@ import type { CalendarEvent, Expense, Income, Property, Task } from '@/types';
 export const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(amount);
 
+export function formatBalanceRatio(totalIncomes: number, balance: number) {
+  if (totalIncomes <= 0) return 'No calculable';
+  return new Intl.NumberFormat('es-ES', {
+    style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1,
+  }).format(balance / totalIncomes);
+}
+
 export const incomeLabels: Record<Income['incomeType'], string> = {
   RENT: 'Alquiler', DEPOSIT: 'Fianza', LATE_FEE: 'Recargo por demora', OTHER: 'Otro',
 };
