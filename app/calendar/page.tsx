@@ -1,5 +1,8 @@
 'use client';
 
+import { useSaveAction } from '@/hooks/useSaveAction';
+import { Notice } from '@/components/Fields';
+
 import { useCallback, useEffect, useState } from 'react';
 import { eventLabels, propertyLabel } from '@/lib/presentation';
 import { calendarEventApi, propertyApi } from '@/lib/api';
@@ -26,7 +29,7 @@ export default function CalendarPage() {
     const from = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
     const to = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
     return Promise.all([
-      calendarEventApi.getAll({ from: from.toISOString(), to: to.toISOString() }),
+      calendarEventApi.getAll({ from: format(from, "yyyy-MM-dd'T'HH:mm:ss"), to: format(to, "yyyy-MM-dd'T'HH:mm:ss") }),
       propertyApi.getAll()
     ]).then(([e, p]) => { setEvents(e); setProperties(p); setLoadError(''); })
       .catch(() => setLoadError('No se pudo cargar el calendario.'))
@@ -42,27 +45,32 @@ export default function CalendarPage() {
 
   const openCreate = (date?: Date) => {
     const d = date || new Date();
-    setEditing(null);
+    saveAction.reset(); setEditing(null);
     setForm({ propertyId: null, title: '', description: '', startDateTime: format(d, "yyyy-MM-dd'T'09:00"), endDateTime: format(d, "yyyy-MM-dd'T'10:00"), eventType: 'REMINDER', color: '#3b82f6', allDay: false });
     setModalOpen(true);
   };
 
   const openEdit = (item: CalendarEvent) => {
-    setEditing(item);
+    saveAction.reset(); setEditing(item);
     setForm({ propertyId: item.propertyId, title: item.title, description: item.description || '', startDateTime: item.startDateTime, endDateTime: item.endDateTime, eventType: item.eventType, color: item.color || '#3b82f6', allDay: item.allDay });
     setModalOpen(true);
   };
 
-  const save = async () => {
+  const saveAction = useSaveAction();
+  const save = () => saveAction.run(async () => {
     if (editing) await calendarEventApi.update(editing.id, form);
-    else await calendarEventApi.create(form);
+    else {
+      const duplicate = events.some(event => event.title.trim() === form.title.trim() && event.propertyId === form.propertyId && event.startDateTime.slice(0,16) === form.startDateTime.slice(0,16));
+      if (duplicate && !confirm("Ya existe un evento con el mismo título, propiedad y fecha. ¿Crear otro de todos modos?")) return;
+      await calendarEventApi.create({ ...form, clientRequestId: saveAction.requestId() });
+    }
     setModalOpen(false);
     load();
-  };
+  });
 
-  const remove = async (id: number) => {
-    if (confirm('¿Eliminar este evento?')) { await calendarEventApi.delete(id); load(); }
-  };
+  const remove = (id: number) => saveAction.run(async () => {
+    if (confirm('¿Archivar este evento?')) { await calendarEventApi.delete(id); load(); }
+  });
 
   const getEventsForDay = (day: Date) =>
     events.filter(e => isSameDay(new Date(e.startDateTime), day));
@@ -88,6 +96,7 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-4">
+      {saveAction.error && <Notice>{saveAction.error}</Notice>}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Calendario</h1>
         <button aria-label="Nuevo evento" onClick={() => openCreate()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shrink-0">
@@ -187,7 +196,7 @@ export default function CalendarPage() {
 
       {loadError && <p role="alert" className="text-red-600 dark:text-red-400">{loadError} <button onClick={load}>Reintentar</button></p>}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar evento' : 'Nuevo evento'}>
-        <div className="space-y-4">
+        <form aria-busy={saveAction.saving} onSubmit={e => { e.preventDefault(); void save(); }} className="space-y-4">
           <div>
             <label htmlFor="calendar-field-1" className="block text-sm font-medium mb-1">Título</label>
             <input id="calendar-field-1" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
@@ -229,11 +238,12 @@ export default function CalendarPage() {
             <input type="checkbox" checked={form.allDay} onChange={e => setForm({ ...form, allDay: e.target.checked })} className="rounded" />
             Todo el día
           </label>
+          {saveAction.error && <Notice>{saveAction.error}</Notice>}
           <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
-            <button onClick={save} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
+            <button type="button" disabled={saveAction.saving} onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
+            <button type="submit" disabled={saveAction.saving} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">{saveAction.saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

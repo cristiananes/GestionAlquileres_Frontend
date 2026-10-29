@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
       {/* Gráfico Ingresos vs Gastos */}
       <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4 md:p-5 card-hover">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <h2 className="font-semibold text-sm md:text-base">Ingresos vs Gastos</h2>
           <span className={`text-xs font-medium ${data.balance >= 0 ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
             Balance / ingresos: {balanceRatio}
@@ -146,7 +146,7 @@ export default function DashboardPage() {
               {data.upcomingEvents.slice(0, 5).map((ev) => (
                 <li key={ev.id} className="flex items-center gap-3 text-xs md:text-sm">
                   <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: ev.color || '#3b82f6' }} />
-                  <div className="flex-1 min-w-0"><p className="truncate">{ev.title}</p><p className="text-xs text-gray-500 dark:text-gray-400 truncate">{ev.propertyName || 'Sin propiedad'}{ev.propertyId ? ` (#${ev.propertyId})` : ''}</p></div>
+                  <div className="flex-1 min-w-0"><p className="truncate">{ev.title}</p>{data.upcomingEvents.some(other => other.id !== ev.id && other.title === ev.title && other.propertyId === ev.propertyId && other.startDateTime === ev.startDateTime) && <p className="text-xs text-amber-700 dark:text-amber-300">Posible duplicado · Evento #{ev.id}</p>}<p className="text-xs text-gray-500 dark:text-gray-400 truncate">{ev.propertyName || 'Sin propiedad'}{ev.propertyId ? ` (#${ev.propertyId})` : ''}</p></div>
                   <span className="text-gray-500 dark:text-gray-400 text-xs shrink-0">
                     {format(new Date(ev.startDateTime), ev.allDay ? 'dd MMM yyyy' : 'dd MMM yyyy HH:mm', { locale: es })}
                   </span>

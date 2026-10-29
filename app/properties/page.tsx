@@ -1,5 +1,9 @@
 'use client';
 
+import Link from 'next/link';
+import { useSaveAction } from '@/hooks/useSaveAction';
+import { Notice } from '@/components/Fields';
+
 import { useEffect, useState, useRef } from 'react';
 import { propertyApi } from '@/lib/api';
 import type { Property, PropertyForm } from '@/types';
@@ -35,14 +39,14 @@ export default function PropertiesPage() {
   useEffect(() => { load(); }, []);
 
   const openCreate = () => {
-    setEditing(null);
+    saveAction.reset(); setEditing(null);
     setForm({ name: '', address: '', city: '', propertyType: '', areaM2: null, bedrooms: null, bathrooms: null, condition: '', hasElevator: null, hasParking: null, description: '', imageUrl: '' });
     setSelectedFiles([]);
     setModalOpen(true);
   };
 
   const openEdit = (item: Property) => {
-    setEditing(item);
+    saveAction.reset(); setEditing(item);
     setForm({
       name: item.name, address: item.address, city: item.city || '',
       propertyType: item.propertyType || '', areaM2: item.areaM2,
@@ -50,6 +54,12 @@ export default function PropertiesPage() {
       condition: item.condition || '', hasElevator: item.hasElevator,
       hasParking: item.hasParking, description: item.description || '',
       imageUrl: item.imageUrl || '',
+      purchasePrice: item.purchasePrice ?? null,
+      purchaseCosts: item.purchaseCosts ?? null,
+      renovationCosts: item.renovationCosts ?? null,
+      furnitureCosts: item.furnitureCosts ?? null,
+      cashInvested: item.cashInvested ?? null,
+
     });
     setSelectedFiles([]);
     setModalOpen(true);
@@ -75,7 +85,8 @@ export default function PropertiesPage() {
     }
   };
 
-  const save = async () => {
+  const saveAction = useSaveAction();
+  const save = () => saveAction.run(async () => {
     setUploading(true);
     try {
       let property: Property;
@@ -84,21 +95,22 @@ export default function PropertiesPage() {
       } else {
         property = await propertyApi.create(form);
       }
+      setEditing(property);
       for (const file of selectedFiles) {
         property = await propertyApi.uploadImage(property.id, file);
+        setEditing(property);
+        setSelectedFiles(files => files.filter(f => f !== file));
       }
       setModalOpen(false);
       load();
-    } catch {
-      alert('Error al guardar la propiedad');
     } finally {
       setUploading(false);
     }
-  };
+  });
 
-  const remove = async (id: number) => {
-    if (confirm('¿Eliminar esta propiedad?')) { await propertyApi.delete(id); load(); }
-  };
+  const remove = (id: number) => saveAction.run(async () => {
+    if (confirm('¿Archivar esta propiedad?')) { await propertyApi.delete(id); load(); }
+  });
 
   if (loading) return (
     <div className="space-y-4">
@@ -116,6 +128,7 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-4">
+      {saveAction.error && <Notice>{saveAction.error}</Notice>}
       <div className="flex items-center justify-between">
         <h1 className="text-xl md:text-2xl font-bold">Propiedades</h1>
         <button onClick={openCreate} className="flex items-center gap-1.5 bg-blue-600 text-white px-3 md:px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
@@ -151,14 +164,14 @@ export default function PropertiesPage() {
             <div className="p-4 md:p-5 space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <h3 className="font-semibold text-base md:text-lg truncate">{item.name}</h3>
+                  <h3 className="font-semibold text-base md:text-lg truncate"><Link href={`/properties/${item.id}`} className="hover:underline">{item.name}</Link></h3>
                   <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-0.5 truncate">
                     <MapPin size={12} className="shrink-0" />{item.address}{item.city ? `, ${item.city}` : ''}
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button aria-label="Editar propiedad" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={14} /></button>
-                  <button aria-label="Eliminar propiedad" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={14} /></button>
+                  <button aria-label="Archivar propiedad" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={14} /></button>
                 </div>
               </div>
 
@@ -178,6 +191,7 @@ export default function PropertiesPage() {
                 {item.hasParking != null && <span className="flex items-center gap-1">{item.hasParking ? <Check size={12} className="text-green-600" /> : <X size={12} className="text-red-400" />} Garaje</span>}
               </div>
 
+              <Link href={`/properties/${item.id}`} className="inline-block text-sm text-blue-600 dark:text-blue-300 hover:underline">Ver ficha y rentabilidad →</Link>
               {item.description && <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{item.description}</p>}
             </div>
           </div>
@@ -186,7 +200,7 @@ export default function PropertiesPage() {
       </div>
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar propiedad' : 'Nueva propiedad'}>
-        <div className="space-y-4">
+        <form aria-busy={saveAction.saving} onSubmit={e => { e.preventDefault(); void save(); }} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
               <label htmlFor="properties-field-1" className="block text-sm font-medium mb-1">Nombre *</label>
@@ -249,7 +263,7 @@ export default function PropertiesPage() {
                   {editing.images.filter(u => u).map((url, i) => (
                     <div key={i} className="relative group">
                       <img src={url} alt={`Imagen ${i + 1}`} className="w-full h-20 object-cover rounded-lg border dark:border-gray-600" />
-                      <button onClick={() => deleteExistingImage(url)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button type="button" onClick={() => deleteExistingImage(url)} className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Trash2 size={12} />
                       </button>
                     </div>
@@ -261,13 +275,13 @@ export default function PropertiesPage() {
                   <ImageIcon size={16} /> {selectedFiles.length > 0 ? 'Añadir más' : 'Seleccionar imágenes'}
                 </button>
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={handleFileChange} className="hidden" />
+              <input ref={fileInputRef} type="file" accept="image/png,image/jpeg" multiple onChange={handleFileChange} className="hidden" />
               {selectedFiles.length > 0 && (
                 <div className="mt-2 space-y-1">
                   {selectedFiles.map((f, i) => (
                     <div key={i} className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded px-2 py-1">
                       <span className="truncate max-w-[200px]">{f.name}</span>
-                      <button onClick={() => removeSelectedFile(i)} className="text-red-500 hover:text-red-700 shrink-0 ml-2">
+                      <button type="button" onClick={() => removeSelectedFile(i)} className="text-red-500 hover:text-red-700 shrink-0 ml-2">
                         <X size={12} />
                       </button>
                     </div>
@@ -276,11 +290,12 @@ export default function PropertiesPage() {
               )}
             </div>
           </div>
+          {saveAction.error && <Notice>{saveAction.error}</Notice>}
           <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
-            <button onClick={save} disabled={uploading} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{uploading ? 'Guardando...' : 'Guardar'}</button>
+            <button type="button" disabled={saveAction.saving} onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
+            <button type="submit" disabled={uploading || saveAction.saving} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">{uploading ? 'Guardando...' : 'Guardar'}</button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );

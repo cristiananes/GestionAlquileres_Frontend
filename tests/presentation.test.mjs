@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { periodRange, inDateRange, invalidRange } from '../src/lib/period.ts';
-import { formatBalanceRatio, formatCurrency, propertyLabel, incomeLabels, paymentLabels } from '../src/lib/presentation.ts';
+import { formatReturn, formatDate, formatBalanceRatio, formatCurrency, propertyLabel, incomeLabels, paymentLabels } from '../src/lib/presentation.ts';
 
 test('periods include the entire local month, including leap day', () => {
   assert.deepEqual(periodRange('month', new Date(2024, 1, 15)), { from: '2024-02-01', to: '2024-02-29' });
@@ -35,4 +35,11 @@ test('balance ratio has no value without positive income and uses Spanish percen
   assert.equal(formatBalanceRatio(-10, -20), 'No calculable');
   assert.match(formatBalanceRatio(870, 860), /^98,9\s%$/);
   assert.match(formatBalanceRatio(100, -10), /^-10,0\s%$/);
+});
+
+test('investment returns distinguish unknown data from a real zero return', () => {
+  assert.equal(formatReturn(null), 'Sin datos de inversión');
+  assert.match(formatReturn(0), /^0\s%$/);
+  assert.match(formatReturn(7.8), /^7,8\s%$/);
+  assert.equal(formatDate('2026-10-29T09:00:00'), '29/10/2026');
 });
