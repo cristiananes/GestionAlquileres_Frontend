@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { formatCurrency, incomeLabels, paymentLabels, propertyLabel } from '@/lib/presentation';
 import { incomeApi, propertyApi } from '@/lib/api';
 import type { Income, IncomeForm, Property } from '@/types';
 import Modal from '@/components/Modal';
+import PeriodFilter from '@/components/PeriodFilter';
+import { DateRange, inDateRange, invalidRange } from '@/lib/period';
 import ResponsiveTable from '@/components/ResponsiveTable';
-import { Plus, Pencil, Trash2, DollarSign, FileDown } from 'lucide-react';
+import { Plus, Pencil, Trash2, FileDown } from 'lucide-react';
 import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
 import { reportApi } from '@/lib/api';
@@ -20,16 +23,18 @@ export default function IncomesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Income | null>(null);
   const [form, setForm] = useState<IncomeForm>({ propertyId: null, amount: null, description: '', incomeDate: '', incomeType: 'RENT', paymentMethod: 'TRANSFER' });
+  const [range, setRange] = useState<DateRange>({ from: '', to: '' });
+  const [propertyFilter, setPropertyFilter] = useState('');
+  const filtered = invalidRange(range) ? [] : items.filter(item => inDateRange(item.incomeDate, range) && (!propertyFilter || item.propertyId === Number(propertyFilter)));
   const [showPdfPicker, setShowPdfPicker] = useState(false);
   const [pdfFrom, setPdfFrom] = useState('');
   const [pdfTo, setPdfTo] = useState('');
 
-  const load = async () => {
-    const [i, p] = await Promise.all([incomeApi.getAll(), propertyApi.getAll()]);
-    setItems(i);
-    setProperties(p);
-    setLoading(false);
-  };
+  const [loadError, setLoadError] = useState('');
+  const load = () => Promise.all([incomeApi.getAll(), propertyApi.getAll()])
+    .then(([records, properties]) => { setItems(records); setProperties(properties); setLoadError(''); })
+    .catch(() => setLoadError('No se pudieron cargar los datos. Inténtalo de nuevo.'))
+    .finally(() => setLoading(false));
 
   useEffect(() => { load(); }, []);
 
@@ -37,7 +42,7 @@ export default function IncomesPage() {
   const openEdit = (item: Income) => { setEditing(item); setForm({ propertyId: item.propertyId, amount: item.amount, description: item.description, incomeDate: item.incomeDate, incomeType: item.incomeType, paymentMethod: item.paymentMethod }); setModalOpen(true); };
 
   const save = async () => {
-    if (form.amount === null) return alert('El monto es obligatorio');
+    if (form.amount === null) return alert('El importe es obligatorio');
     const data = { ...form, amount: form.amount as number };
     if (editing) await incomeApi.update(editing.id, data);
     else await incomeApi.create(data);
@@ -46,6 +51,8 @@ export default function IncomesPage() {
   };
 
   const downloadPDF = async () => {
+    if (pdfFrom && pdfTo && pdfFrom > pdfTo) return alert('La fecha de inicio debe ser anterior o igual a la final');
+    if (Boolean(pdfFrom) !== Boolean(pdfTo)) return alert('Indica ambas fechas o deja ambas vacías para exportar todo el histórico');
     try {
       const blob = await reportApi.downloadIncomes(pdfFrom || undefined, pdfTo || undefined);
       const url = window.URL.createObjectURL(blob);
@@ -84,60 +91,72 @@ export default function IncomesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Ingresos</h1>
         <div className="flex items-center gap-2">
-          <button onClick={togglePdfPicker} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shrink-0">
+          <button aria-label="Exportar PDF" onClick={togglePdfPicker} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors shrink-0">
             <FileDown size={16} /> <span className="hidden sm:inline">PDF</span>
           </button>
-          <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
+          <button aria-label="Nuevo registro" onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
             <Plus size={16} /> <span className="hidden sm:inline">Nuevo</span>
           </button>
         </div>
       </div>
 
       {showPdfPicker && (
-        <div className="flex items-end gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">
+        <div className="flex flex-wrap items-end gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border dark:border-gray-700">
           <div>
-            <label className="block text-xs font-medium mb-1">Desde</label>
-            <input type="date" value={pdfFrom} onChange={e => setPdfFrom(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+            <label htmlFor="incomes-field-1" className="block text-xs font-medium mb-1">Desde</label>
+            <input id="incomes-field-1" type="date" value={pdfFrom} onChange={e => setPdfFrom(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1">Hasta</label>
-            <input type="date" value={pdfTo} onChange={e => setPdfTo(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
+            <label htmlFor="incomes-field-2" className="block text-xs font-medium mb-1">Hasta</label>
+            <input id="incomes-field-2" type="date" value={pdfTo} onChange={e => setPdfTo(e.target.value)} className="border dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-800" />
           </div>
           <button onClick={downloadPDF} className="bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">Descargar</button>
         </div>
       )}
 
+      <div className="flex flex-wrap items-end gap-4 bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4">
+        <PeriodFilter value={range} onChange={setRange} />
+        <label className="text-sm min-w-0 max-w-full">Propiedad
+          <select aria-label="Filtrar por propiedad" value={propertyFilter} onChange={e => setPropertyFilter(e.target.value)} className="block border rounded-lg px-3 py-2 mt-1 max-w-full">
+            <option value="">Todas las propiedades</option>
+            {properties.map(p => <option key={p.id} value={p.id}>{propertyLabel(p)}</option>)}
+          </select>
+        </label>
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-300" aria-live="polite">{filtered.length} registros · Total: {formatCurrency(filtered.reduce((sum, item) => sum + item.amount, 0))}</p>
+
+      {loadError && <div role="alert" className="text-sm text-red-600 dark:text-red-400">{loadError} <button onClick={load} className="underline">Reintentar</button></div>}
       <ResponsiveTable
         columns={[
           { key: 'date', label: 'Fecha', render: (item) => format(new Date(item.incomeDate), 'dd/MM/yyyy') },
           { key: 'desc', label: 'Descripción', render: (item) => item.description },
-          { key: 'property', label: 'Propiedad', render: (item) => <span className="text-gray-600">{item.propertyName || '-'}</span> },
-          { key: 'type', label: 'Tipo', render: (item) => <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{item.incomeType}</span> },
-          { key: 'method', label: 'Método', render: (item) => <span className="text-gray-600">{item.paymentMethod || '-'}</span> },
-          { key: 'amount', label: 'Monto', render: (item) => <span className="font-medium text-green-600">${item.amount.toLocaleString()}</span> },
+          { key: 'property', label: 'Propiedad', render: (item) => <span className="text-gray-600 dark:text-gray-300">{item.propertyName || '-'}</span> },
+          { key: 'type', label: 'Tipo', render: (item) => <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{incomeLabels[item.incomeType]}</span> },
+          { key: 'method', label: 'Método', render: (item) => <span className="text-gray-600 dark:text-gray-300">{paymentLabels[item.paymentMethod] || '-'}</span> },
+          { key: 'amount', label: 'Importe', render: (item) => <span className="font-medium text-green-700 dark:text-green-400">{formatCurrency(item.amount)}</span> },
           { key: 'actions', label: 'Acción', render: (item) => (
             <div className="flex gap-1">
-              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
-              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+              <button aria-label="Editar" title="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button aria-label="Eliminar" title="Eliminar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           )},
         ]}
-        data={items}
-        emptyMessage="Sin ingresos"
+        data={filtered}
+        emptyMessage="Sin ingresos para los filtros seleccionados"
         mobileCard={(item) => (
           <>
             <div className="flex items-center justify-between gap-2">
               <span className="text-sm font-medium truncate">{item.description}</span>
-              <span className="font-medium text-green-600 shrink-0">${item.amount.toLocaleString()}</span>
+              <span className="font-medium text-green-700 dark:text-green-400 shrink-0">{formatCurrency(item.amount)}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
               <span>{format(new Date(item.incomeDate), 'dd/MM/yyyy')}</span>
               <span>{item.propertyName || '-'}</span>
-              <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">{item.incomeType}</span>
+              <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">{incomeLabels[item.incomeType]}</span>
             </div>
             <div className="flex justify-end gap-1 pt-1 border-t">
-              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
-              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+              <button aria-label="Editar" title="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button aria-label="Eliminar" title="Eliminar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           </>
         )}
@@ -146,35 +165,35 @@ export default function IncomesPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar ingreso' : 'Nuevo ingreso'}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Propiedad</label>
-            <select value={form.propertyId ?? ''} onChange={e => setForm({ ...form, propertyId: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm">
+            <label htmlFor="incomes-field-3" className="block text-sm font-medium mb-1">Propiedad</label>
+            <select id="incomes-field-3" value={form.propertyId ?? ''} onChange={e => setForm({ ...form, propertyId: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm">
               <option value="">Sin propiedad</option>
-              {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {properties.map(p => <option key={p.id} value={p.id}>{propertyLabel(p)}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Monto</label>
-            <input type="number" value={form.amount ?? ''} onChange={e => setForm({ ...form, amount: e.target.value === '' ? null : Number(e.target.value) })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+            <label htmlFor="incomes-field-4" className="block text-sm font-medium mb-1">Importe</label>
+            <input id="incomes-field-4" type="number" value={form.amount ?? ''} onChange={e => setForm({ ...form, amount: e.target.value === '' ? null : Number(e.target.value) })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Descripción</label>
-            <input value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+            <label htmlFor="incomes-field-5" className="block text-sm font-medium mb-1">Descripción</label>
+            <input id="incomes-field-5" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Fecha</label>
-            <input type="date" value={form.incomeDate} onChange={e => setForm({ ...form, incomeDate: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+            <label htmlFor="incomes-field-6" className="block text-sm font-medium mb-1">Fecha</label>
+            <input id="incomes-field-6" type="date" value={form.incomeDate} onChange={e => setForm({ ...form, incomeDate: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Tipo</label>
-              <select value={form.incomeType} onChange={e => setForm({ ...form, incomeType: e.target.value as IncomeForm['incomeType'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                {incomeTypes.map(t => <option key={t} value={t}>{t}</option>)}
+              <label htmlFor="incomes-field-7" className="block text-sm font-medium mb-1">Tipo</label>
+              <select id="incomes-field-7" value={form.incomeType} onChange={e => setForm({ ...form, incomeType: e.target.value as IncomeForm['incomeType'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
+                {incomeTypes.map(t => <option key={t} value={t}>{incomeLabels[t]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Método de pago</label>
-              <select value={form.paymentMethod} onChange={e => setForm({ ...form, paymentMethod: e.target.value as IncomeForm['paymentMethod'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+              <label htmlFor="incomes-field-8" className="block text-sm font-medium mb-1">Método de pago</label>
+              <select id="incomes-field-8" value={form.paymentMethod} onChange={e => setForm({ ...form, paymentMethod: e.target.value as IncomeForm['paymentMethod'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
+                {paymentMethods.map(m => <option key={m} value={m}>{paymentLabels[m]}</option>)}
               </select>
             </div>
           </div>

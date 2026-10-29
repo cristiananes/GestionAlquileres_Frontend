@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { priorityLabels, propertyLabel } from '@/lib/presentation';
 import { taskApi, propertyApi } from '@/lib/api';
 import type { Task, TaskForm, Property } from '@/types';
 import Modal from '@/components/Modal';
 import ResponsiveTable from '@/components/ResponsiveTable';
-import { Plus, Pencil, Trash2, CheckCircle, Circle, CheckSquare } from 'lucide-react';
+import { Plus, Pencil, Trash2, CheckCircle, Circle } from 'lucide-react';
 import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
 
@@ -20,12 +21,11 @@ export default function TasksPage() {
   const [filter, setFilter] = useState<string>('all');
   const [form, setForm] = useState<TaskForm>({ propertyId: null, title: '', description: '', completed: false, dueDate: '', priority: 'MEDIUM' });
 
-  const load = async () => {
-    const [t, p] = await Promise.all([taskApi.getAll(), propertyApi.getAll()]);
-    setItems(t);
-    setProperties(p);
-    setLoading(false);
-  };
+  const [loadError, setLoadError] = useState('');
+  const load = () => Promise.all([taskApi.getAll(), propertyApi.getAll()])
+    .then(([records, properties]) => { setItems(records); setProperties(properties); setLoadError(''); })
+    .catch(() => setLoadError('No se pudieron cargar los datos. Inténtalo de nuevo.'))
+    .finally(() => setLoading(false));
 
   useEffect(() => { load(); }, []);
 
@@ -74,29 +74,30 @@ export default function TasksPage() {
         ))}
       </div>
 
+      {loadError && <div role="alert" className="text-sm text-red-600 dark:text-red-400">{loadError} <button onClick={load} className="underline">Reintentar</button></div>}
       <ResponsiveTable
         columns={[
           { key: 'toggle', label: '', render: (item) => (
-            <button onClick={() => toggle(item.id)} className="text-blue-600 hover:text-blue-800">
+            <button aria-label={item.completed ? "Marcar como pendiente" : "Marcar como completada"} onClick={() => toggle(item.id)} className="text-blue-600 hover:text-blue-800">
               {item.completed ? <CheckCircle size={18} /> : <Circle size={18} />}
             </button>
           )},
           { key: 'title', label: 'Título', render: (item) => (
             <span className={`font-medium ${item.completed ? 'line-through opacity-60' : ''}`}>{item.title}</span>
           )},
-          { key: 'property', label: 'Propiedad', render: (item) => <span className="text-gray-600">{item.propertyName || '-'}</span> },
+          { key: 'property', label: 'Propiedad', render: (item) => <span className="text-gray-600 dark:text-gray-300">{item.propertyName || '-'}</span> },
           { key: 'priority', label: 'Prioridad', render: (item) => (
             <span className={`text-xs px-2 py-0.5 rounded-full ${
               item.priority === 'HIGH' ? 'bg-red-50 text-red-700' :
               item.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700' :
               'bg-green-50 text-green-700'
-            }`}>{item.priority}</span>
+            }`}>{priorityLabels[item.priority]}</span>
           )},
-          { key: 'dueDate', label: 'Vence', render: (item) => <span className="text-gray-600">{item.dueDate ? format(new Date(item.dueDate), 'dd/MM/yyyy') : '-'}</span> },
+          { key: 'dueDate', label: 'Vence', render: (item) => <span className="text-gray-600 dark:text-gray-300">{item.dueDate ? format(new Date(item.dueDate), 'dd/MM/yyyy') : '-'}</span> },
           { key: 'actions', label: 'Acción', render: (item) => (
             <div className="flex gap-1">
-              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
-              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+              <button aria-label="Editar" title="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button aria-label="Eliminar" title="Eliminar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           )},
         ]}
@@ -106,7 +107,7 @@ export default function TasksPage() {
           <>
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
-                <button onClick={() => toggle(item.id)} className="text-blue-600 hover:text-blue-800 shrink-0">
+                <button aria-label={item.completed ? "Marcar como pendiente" : "Marcar como completada"} onClick={() => toggle(item.id)} className="text-blue-600 hover:text-blue-800 shrink-0">
                   {item.completed ? <CheckCircle size={18} /> : <Circle size={18} />}
                 </button>
                 <span className={`text-sm font-medium truncate ${item.completed ? 'line-through opacity-60' : ''}`}>{item.title}</span>
@@ -115,15 +116,15 @@ export default function TasksPage() {
                 item.priority === 'HIGH' ? 'bg-red-50 text-red-700' :
                 item.priority === 'MEDIUM' ? 'bg-yellow-50 text-yellow-700' :
                 'bg-green-50 text-green-700'
-              }`}>{item.priority}</span>
+              }`}>{priorityLabels[item.priority]}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <span>{item.propertyName || '-'}</span>
               {item.dueDate && <span>Vence: {format(new Date(item.dueDate), 'dd/MM/yyyy')}</span>}
             </div>
             <div className="flex justify-end gap-1 pt-1 border-t">
-              <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 rounded-lg"><Pencil size={15} /></button>
-              <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+              <button aria-label="Editar" title="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button aria-label="Eliminar" title="Eliminar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           </>
         )}
@@ -132,30 +133,30 @@ export default function TasksPage() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar tarea' : 'Nueva tarea'}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Título</label>
-            <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+            <label htmlFor="tasks-field-1" className="block text-sm font-medium mb-1">Título</label>
+            <input id="tasks-field-1" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Descripción</label>
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} />
+            <label htmlFor="tasks-field-2" className="block text-sm font-medium mb-1">Descripción</label>
+            <textarea id="tasks-field-2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Propiedad</label>
-            <select value={form.propertyId ?? ''} onChange={e => setForm({ ...form, propertyId: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm">
+            <label htmlFor="tasks-field-3" className="block text-sm font-medium mb-1">Propiedad</label>
+            <select id="tasks-field-3" value={form.propertyId ?? ''} onChange={e => setForm({ ...form, propertyId: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm">
               <option value="">Sin propiedad</option>
-              {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {properties.map(p => <option key={p.id} value={p.id}>{propertyLabel(p)}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Prioridad</label>
-              <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as TaskForm['priority'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                {priorities.map(p => <option key={p} value={p}>{p}</option>)}
+              <label htmlFor="tasks-field-4" className="block text-sm font-medium mb-1">Prioridad</label>
+              <select id="tasks-field-4" value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value as TaskForm['priority'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
+                {priorities.map(p => <option key={p} value={p}>{priorityLabels[p]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Fecha de vencimiento</label>
-              <input type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="tasks-field-5" className="block text-sm font-medium mb-1">Fecha de vencimiento</label>
+              <input id="tasks-field-5" type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">

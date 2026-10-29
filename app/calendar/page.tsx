@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { eventLabels, propertyLabel } from '@/lib/presentation';
 import { calendarEventApi, propertyApi } from '@/lib/api';
 import type { CalendarEvent, CalendarEventForm, Property } from '@/types';
 import Modal from '@/components/Modal';
@@ -18,32 +19,30 @@ export default function CalendarPage() {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>('');
   const [form, setForm] = useState<CalendarEventForm>({ propertyId: null, title: '', description: '', startDateTime: '', endDateTime: '', eventType: 'REMINDER', color: '#3b82f6', allDay: false });
 
-  const load = async () => {
-    const from = startOfWeek(startOfMonth(currentMonth));
-    const to = endOfWeek(endOfMonth(currentMonth));
-    const [e, p] = await Promise.all([
+  const [loadError, setLoadError] = useState('');
+  const load = useCallback(() => {
+    const from = startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 });
+    const to = endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 });
+    return Promise.all([
       calendarEventApi.getAll({ from: from.toISOString(), to: to.toISOString() }),
       propertyApi.getAll()
-    ]);
-    setEvents(e);
-    setProperties(p);
-    setLoading(false);
-  };
+    ]).then(([e, p]) => { setEvents(e); setProperties(p); setLoadError(''); })
+      .catch(() => setLoadError('No se pudo cargar el calendario.'))
+      .finally(() => setLoading(false));
+  }, [currentMonth]);
 
-  useEffect(() => { load(); }, [currentMonth]);
+  useEffect(() => { load(); }, [load]);
 
   const days = eachDayOfInterval({
-    start: startOfWeek(startOfMonth(currentMonth)),
-    end: endOfWeek(endOfMonth(currentMonth)),
+    start: startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 }),
   });
 
   const openCreate = (date?: Date) => {
     const d = date || new Date();
     setEditing(null);
-    setSelectedDate(format(d, 'yyyy-MM-dd'));
     setForm({ propertyId: null, title: '', description: '', startDateTime: format(d, "yyyy-MM-dd'T'09:00"), endDateTime: format(d, "yyyy-MM-dd'T'10:00"), eventType: 'REMINDER', color: '#3b82f6', allDay: false });
     setModalOpen(true);
   };
@@ -91,7 +90,7 @@ export default function CalendarPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Calendario</h1>
-        <button onClick={() => openCreate()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shrink-0">
+        <button aria-label="Nuevo evento" onClick={() => openCreate()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 shrink-0">
           <Plus size={16} /> <span className="hidden sm:inline">Nuevo evento</span>
         </button>
       </div>
@@ -104,7 +103,7 @@ export default function CalendarPage() {
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 overflow-hidden">
         <div className="grid grid-cols-7 bg-gray-50 dark:bg-gray-700 text-center text-[10px] md:text-sm font-medium">
-          {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(d => <div key={d} className="p-1 md:p-2 border-b">{d}</div>)}
+          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(d => <div key={d} className="p-1 md:p-2 border-b">{d}</div>)}
         </div>
         <div className="grid grid-cols-7">
           {days.map((day) => {
@@ -114,7 +113,7 @@ export default function CalendarPage() {
               <div
                 key={day.toISOString()}
                 onClick={() => handleDayClick(day)}
-                className={`min-h-[36px] md:min-h-[100px] p-0.5 md:p-1.5 border-b border-r text-xs md:text-sm cursor-pointer transition-colors hover:bg-blue-50 ${
+                className={`min-h-[36px] md:min-h-[100px] p-0.5 md:p-1.5 border-b border-r text-xs md:text-sm cursor-pointer transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/30 ${
                   !isSameMonth(day, currentMonth) ? 'text-gray-300' : ''
                 } ${isToday(day) ? 'bg-blue-50 dark:bg-blue-900/30' : ''} ${isSelected ? 'ring-2 ring-blue-400 ring-inset' : ''}`}
               >
@@ -172,7 +171,7 @@ export default function CalendarPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium truncate">{ev.title}</p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {format(new Date(ev.startDateTime), 'HH:mm')} &middot; {ev.eventType}
+                      {format(new Date(ev.startDateTime), 'HH:mm')} &middot; {eventLabels[ev.eventType]}
                     </p>
                   </div>
                   <div className="flex gap-1 shrink-0">
@@ -186,43 +185,44 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {loadError && <p role="alert" className="text-red-600 dark:text-red-400">{loadError} <button onClick={load}>Reintentar</button></p>}
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar evento' : 'Nuevo evento'}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Título</label>
-            <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+            <label htmlFor="calendar-field-1" className="block text-sm font-medium mb-1">Título</label>
+            <input id="calendar-field-1" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Descripción</label>
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={2} />
+            <label htmlFor="calendar-field-2" className="block text-sm font-medium mb-1">Descripción</label>
+            <textarea id="calendar-field-2" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={2} />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Propiedad</label>
-            <select value={form.propertyId ?? ''} onChange={e => setForm({ ...form, propertyId: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm">
+            <label htmlFor="calendar-field-3" className="block text-sm font-medium mb-1">Propiedad</label>
+            <select id="calendar-field-3" value={form.propertyId ?? ''} onChange={e => setForm({ ...form, propertyId: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm">
               <option value="">Sin propiedad</option>
-              {properties.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {properties.map(p => <option key={p.id} value={p.id}>{propertyLabel(p)}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Inicio</label>
-              <input type="datetime-local" value={form.startDateTime.slice(0, 16)} onChange={e => setForm({ ...form, startDateTime: e.target.value + ':00' })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="calendar-field-4" className="block text-sm font-medium mb-1">Inicio</label>
+              <input id="calendar-field-4" type="datetime-local" value={form.startDateTime.slice(0, 16)} onChange={e => setForm({ ...form, startDateTime: e.target.value + ':00' })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Fin</label>
-              <input type="datetime-local" value={form.endDateTime.slice(0, 16)} onChange={e => setForm({ ...form, endDateTime: e.target.value + ':00' })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="calendar-field-5" className="block text-sm font-medium mb-1">Fin</label>
+              <input id="calendar-field-5" type="datetime-local" value={form.endDateTime.slice(0, 16)} onChange={e => setForm({ ...form, endDateTime: e.target.value + ':00' })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium mb-1">Tipo</label>
-              <select value={form.eventType} onChange={e => setForm({ ...form, eventType: e.target.value as CalendarEventForm['eventType'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
-                {eventTypes.map(t => <option key={t} value={t}>{t}</option>)}
+              <label htmlFor="calendar-field-6" className="block text-sm font-medium mb-1">Tipo</label>
+              <select id="calendar-field-6" value={form.eventType} onChange={e => setForm({ ...form, eventType: e.target.value as CalendarEventForm['eventType'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
+                {eventTypes.map(t => <option key={t} value={t}>{eventLabels[t]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Color</label>
-              <input type="color" value={form.color} onChange={e => setForm({ ...form, color: e.target.value })} className="w-full h-9 border rounded-lg" />
+              <label htmlFor="calendar-field-7" className="block text-sm font-medium mb-1">Color</label>
+              <input id="calendar-field-7" type="color" value={form.color} onChange={e => setForm({ ...form, color: e.target.value })} className="w-full h-9 border rounded-lg" />
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm">
