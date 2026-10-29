@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
+import { createContext, useContext, ReactNode, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
 
@@ -29,48 +29,59 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const router = useRouter();
+// localStorage is external React state: subscribe to changes in this tab and other tabs.
+const sessionEvent = 'gestion-alquiler-session';
+function subscribeSession(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  window.addEventListener(sessionEvent, onChange);
+  return () => {
+    window.removeEventListener('storage', onChange);
+    window.removeEventListener(sessionEvent, onChange);
+  };
+}
+const readToken = () => localStorage.getItem('token');
+const serverToken = () => null;
+const clientReady = () => true;
+const serverReady = () => false;
+function storeToken(value: string | null) {
+  if (value) localStorage.setItem('token', value);
+  else localStorage.removeItem('token');
+  window.dispatchEvent(new Event(sessionEvent));
+}
 
-  useEffect(() => {
-    const stored = localStorage.getItem('token');
-    if (stored) {
-      setToken(stored);
-      try {
-        const payload = JSON.parse(atob(stored.split('.')[1]));
-        setUser({ id: payload.userId, name: payload.name, email: payload.sub, role: payload.role });
-      } catch {
-        localStorage.removeItem('token');
-      }
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const token = useSyncExternalStore(subscribeSession, readToken, serverToken);
+  const ready = useSyncExternalStore(subscribeSession, clientReady, serverReady);
+  const loading = !ready;
+  const user = useMemo<User | null>(() => {
+    if (!token) return null;
+    try {
+      const encoded = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(encoded), c => c.charCodeAt(0))));
+      if (!payload.sub || !payload.userId) return null;
+      return { id: payload.userId, name: payload.name, email: payload.sub, role: payload.role };
+    } catch {
+      return null;
     }
-    setLoading(false);
-  }, []);
+  }, [token]);
+  const router = useRouter();
 
   const login = useCallback(async (email: string, password: string) => {
     const res = await authApi.login(email, password);
     const data = res.data;
-    localStorage.setItem('token', data.token);
-    setToken(data.token);
-    setUser({ id: data.userId, name: data.name, email: data.email, role: data.role });
+    storeToken(data.token);
     router.push('/dashboard');
   }, [router]);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     const res = await authApi.register(name, email, password);
     const data = res.data;
-    localStorage.setItem('token', data.token);
-    setToken(data.token);
-    setUser({ id: data.userId, name: data.name, email: data.email, role: data.role });
+    storeToken(data.token);
     router.push('/dashboard');
   }, [router]);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
+    storeToken(null);
     router.push('/login');
   }, [router]);
 

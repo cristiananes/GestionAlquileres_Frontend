@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
-import { LayoutDashboard, Building2, DollarSign, TrendingDown, Calendar, CheckSquare, Menu, X, Sun, Moon, Mail, ThumbsUp, LogOut } from 'lucide-react';
+import { LayoutDashboard, Building2, Euro, TrendingDown, Calendar, CheckSquare, Menu, X, Sun, Moon, Mail, ThumbsUp, LogOut } from 'lucide-react';
 import { useDarkMode } from '@/context/DarkModeContext';
 import { useAuth } from '@/context/AuthContext';
 
 const links = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/properties', label: 'Propiedades', icon: Building2 },
-  { href: '/incomes', label: 'Ingresos', icon: DollarSign },
+  { href: '/incomes', label: 'Ingresos', icon: Euro },
   { href: '/expenses', label: 'Gastos', icon: TrendingDown },
   { href: '/calendar', label: 'Calendario', icon: Calendar },
   { href: '/tasks', label: 'Tareas', icon: CheckSquare },
@@ -29,7 +29,8 @@ export default function Sidebar() {
       <button
         onClick={toggle}
         className="fixed top-4 left-4 z-50 lg:hidden bg-slate-800 text-white p-2.5 rounded-lg shadow-lg"
-        aria-label="Toggle menu"
+        aria-label={open ? "Cerrar menú" : "Abrir menú"}
+        aria-expanded={open}
       >
         {open ? <X size={20} /> : <Menu size={20} />}
       </button>
@@ -53,6 +54,7 @@ export default function Sidebar() {
               <Link
                 key={link.href}
                 href={link.href}
+                aria-current={active ? "page" : undefined}
                 onClick={close}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   active

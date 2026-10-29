@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { propertyApi } from '@/lib/api';
 import type { Property, PropertyForm } from '@/types';
 import Modal from '@/components/Modal';
-import { Plus, Pencil, Trash2, Building2, MapPin, Ruler, BedDouble, Bath, Check, X, Home, ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Building2, MapPin, Ruler, BedDouble, Bath, Check, X, Home, ImageIcon } from 'lucide-react';
 import { SkeletonCard } from '@/components/Skeleton';
 
 const propertyTypes = ['APARTMENT', 'HOUSE', 'LOCAL', 'OFFICE', 'GARAGE', 'OTHER'] as const;
@@ -157,8 +157,8 @@ export default function PropertiesPage() {
                   </p>
                 </div>
                 <div className="flex gap-1 shrink-0">
-                  <button onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={14} /></button>
-                  <button onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={14} /></button>
+                  <button aria-label="Editar propiedad" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={14} /></button>
+                  <button aria-label="Eliminar propiedad" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 text-red-500 rounded-lg"><Trash2 size={14} /></button>
                 </div>
               </div>
 
@@ -170,7 +170,7 @@ export default function PropertiesPage() {
               <div className="flex gap-3 md:gap-4 text-xs md:text-sm text-gray-600 dark:text-gray-300 flex-wrap">
                 {item.areaM2 && <span className="flex items-center gap-1"><Ruler size={13} />{item.areaM2} m²</span>}
                 {item.bedrooms != null && <span className="flex items-center gap-1"><BedDouble size={13} />{item.bedrooms} hab</span>}
-                {item.bathrooms != null && <span className="flex items-center gap-1"><Bath size={13} />{item.bathrooms} baños</span>}
+                {item.bathrooms != null && <span className="flex items-center gap-1"><Bath size={13} />{item.bathrooms} {item.bathrooms === 1 ? 'baño' : 'baños'}</span>}
               </div>
 
               <div className="flex gap-3 text-xs">
@@ -189,42 +189,42 @@ export default function PropertiesPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium mb-1">Nombre *</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+              <label htmlFor="properties-field-1" className="block text-sm font-medium mb-1">Nombre *</label>
+              <input id="properties-field-1" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium mb-1">Dirección *</label>
-              <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
+              <label htmlFor="properties-field-2" className="block text-sm font-medium mb-1">Dirección *</label>
+              <input id="properties-field-2" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Ciudad</label>
-              <input value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="properties-field-3" className="block text-sm font-medium mb-1">Ciudad</label>
+              <input id="properties-field-3" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Tipo</label>
-              <select value={form.propertyType} onChange={e => setForm({ ...form, propertyType: e.target.value as PropertyForm['propertyType'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <label htmlFor="properties-field-4" className="block text-sm font-medium mb-1">Tipo</label>
+              <select id="properties-field-4" value={form.propertyType} onChange={e => setForm({ ...form, propertyType: e.target.value as PropertyForm['propertyType'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
                 <option value="">Seleccionar</option>
                 {propertyTypes.map(t => <option key={t} value={t}>{labels[t]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">m²</label>
-              <input type="number" value={form.areaM2 ?? ''} onChange={e => setForm({ ...form, areaM2: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="properties-field-5" className="block text-sm font-medium mb-1">m²</label>
+              <input id="properties-field-5" type="number" value={form.areaM2 ?? ''} onChange={e => setForm({ ...form, areaM2: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Estado</label>
-              <select value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value as PropertyForm['condition'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
+              <label htmlFor="properties-field-6" className="block text-sm font-medium mb-1">Estado</label>
+              <select id="properties-field-6" value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value as PropertyForm['condition'] })} className="w-full border rounded-lg px-3 py-2 text-sm">
                 <option value="">Seleccionar</option>
                 {conditions.map(c => <option key={c} value={c}>{labels[c]}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Habitaciones</label>
-              <input type="number" value={form.bedrooms ?? ''} onChange={e => setForm({ ...form, bedrooms: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="properties-field-7" className="block text-sm font-medium mb-1">Habitaciones</label>
+              <input id="properties-field-7" type="number" value={form.bedrooms ?? ''} onChange={e => setForm({ ...form, bedrooms: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Baños</label>
-              <input type="number" value={form.bathrooms ?? ''} onChange={e => setForm({ ...form, bathrooms: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
+              <label htmlFor="properties-field-8" className="block text-sm font-medium mb-1">Baños</label>
+              <input id="properties-field-8" type="number" value={form.bathrooms ?? ''} onChange={e => setForm({ ...form, bathrooms: e.target.value ? Number(e.target.value) : null })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
             <div>
               <label className="flex items-center gap-2 text-sm border dark:border-gray-600 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
@@ -239,8 +239,8 @@ export default function PropertiesPage() {
               </label>
             </div>
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium mb-1">Descripción</label>
-              <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} />
+              <label htmlFor="properties-field-9" className="block text-sm font-medium mb-1">Descripción</label>
+              <textarea id="properties-field-9" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" rows={3} />
             </div>
             <div className="sm:col-span-2">
               <label className="block text-sm font-medium mb-1">Imágenes</label>

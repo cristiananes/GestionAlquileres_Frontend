@@ -1,5 +1,6 @@
 'use client';
 
+import { isAxiosError } from 'axios';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
@@ -18,15 +19,15 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Email o contraseña incorrectos');
+    } catch (err: unknown) {
+      setError((isAxiosError(err) && (err.response?.data?.message || err.response?.data?.error)) || 'Email o contraseña incorrectos');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-full flex items-center justify-center p-4">
       <div className="w-full max-w-sm bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-6 md:p-8 space-y-6">
         <div className="text-center">
           <h1 className="text-xl font-bold">GestionAlquiler</h1>
@@ -35,12 +36,12 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
+            <label htmlFor="login-field-1" className="block text-sm font-medium mb-1">Email</label>
+            <input id="login-field-1" type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Contraseña</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
+            <label htmlFor="login-field-2" className="block text-sm font-medium mb-1">Contraseña</label>
+            <input id="login-field-2" type="password" value={password} onChange={e => setPassword(e.target.value)} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
           </div>
 
           {error && <p className="text-red-500 text-sm">{error}</p>}

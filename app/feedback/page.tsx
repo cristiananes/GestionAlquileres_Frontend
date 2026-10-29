@@ -66,16 +66,16 @@ export default function FeedbackPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">Nombre</label>
-          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
+          <label htmlFor="feedback-field-1" className="block text-sm font-medium mb-1">Nombre</label>
+          <input id="feedback-field-1" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
+          <label htmlFor="feedback-field-2" className="block text-sm font-medium mb-1">Email</label>
+          <input id="feedback-field-2" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Cuéntanos más</label>
-          <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" rows={5} required placeholder="Describe tu experiencia, sugerencia o el error que encontraste..." />
+          <label htmlFor="feedback-field-3" className="block text-sm font-medium mb-1">Cuéntanos más</label>
+          <textarea id="feedback-field-3" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" rows={5} required placeholder="Describe tu experiencia, sugerencia o el error que encontraste..." />
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}

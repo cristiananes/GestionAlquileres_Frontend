@@ -98,5 +98,5 @@ export const reportApi = {
 };
 
 export const dashboardApi = {
-  getSummary: () => api.get<DashboardSummary>('/dashboard/summary').then(r => r.data),
+  getSummary: (params?: { from?: string; to?: string }) => api.get<DashboardSummary>('/dashboard/summary', { params }).then(r => r.data),
 };

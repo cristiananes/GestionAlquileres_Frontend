@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import AppShell from "@/components/AppShell";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { DarkModeProvider } from "@/context/DarkModeContext";
 import { AuthProvider } from "@/context/AuthContext";
@@ -34,8 +34,7 @@ export default function RootLayout({
           <DarkModeProvider>
             <AuthProvider>
               <AuthGuard>
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto p-4 md:p-6 pt-16 lg:pt-6 animate-fade-in">{children}</main>
+                <AppShell>{children}</AppShell>
               </AuthGuard>
             </AuthProvider>
           </DarkModeProvider>

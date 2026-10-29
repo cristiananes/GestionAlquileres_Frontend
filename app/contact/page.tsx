@@ -36,20 +36,20 @@ export default function ContactPage() {
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl border dark:border-gray-700 p-4 md:p-6 space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">Nombre</label>
-          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
+          <label htmlFor="contact-field-1" className="block text-sm font-medium mb-1">Nombre</label>
+          <input id="contact-field-1" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
+          <label htmlFor="contact-field-2" className="block text-sm font-medium mb-1">Email</label>
+          <input id="contact-field-2" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" required />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Asunto</label>
-          <input value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" />
+          <label htmlFor="contact-field-3" className="block text-sm font-medium mb-1">Asunto</label>
+          <input id="contact-field-3" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">Mensaje</label>
-          <textarea value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" rows={5} required />
+          <label htmlFor="contact-field-4" className="block text-sm font-medium mb-1">Mensaje</label>
+          <textarea id="contact-field-4" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} className="w-full border dark:border-gray-600 rounded-lg px-3 py-2 text-sm" rows={5} required />
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
