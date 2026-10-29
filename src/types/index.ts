@@ -76,7 +76,7 @@ export interface Expense {
   amount: number;
   description: string;
   expenseDate: string;
-  category: 'REPAIR' | 'MAINTENANCE' | 'TAXES' | 'UTILITIES' | 'INSURANCE' | 'CLEANING' | 'COMMISSION' | 'LEGAL' | 'ADMINISTRATION' | 'INVESTMENT' | 'FINANCING' | 'OTHER';
+  category: 'REPAIR' | 'MAINTENANCE' | 'TAXES' | 'UTILITIES' | 'INSURANCE' | 'CLEANING' | 'COMMISSION' | 'LEGAL' | 'ADMINISTRATION' | 'INVESTMENT' | 'FINANCING' | 'DEPOSIT_REFUND' | 'OTHER';
   createdAt: string;
   updatedAt: string;
 }
@@ -87,7 +87,7 @@ export interface ExpenseForm {
   amount: number | null;
   description: string;
   expenseDate: string;
-  category: 'REPAIR' | 'MAINTENANCE' | 'TAXES' | 'UTILITIES' | 'INSURANCE' | 'CLEANING' | 'COMMISSION' | 'LEGAL' | 'ADMINISTRATION' | 'INVESTMENT' | 'FINANCING' | 'OTHER';
+  category: 'REPAIR' | 'MAINTENANCE' | 'TAXES' | 'UTILITIES' | 'INSURANCE' | 'CLEANING' | 'COMMISSION' | 'LEGAL' | 'ADMINISTRATION' | 'INVESTMENT' | 'FINANCING' | 'DEPOSIT_REFUND' | 'OTHER';
 }
 
 export interface CalendarEvent {

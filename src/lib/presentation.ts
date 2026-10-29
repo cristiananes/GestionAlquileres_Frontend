@@ -18,7 +18,7 @@ export const paymentLabels: Record<Income['paymentMethod'], string> = {
   DEBIT_CARD: 'Tarjeta de débito', CHECK: 'Cheque', OTHER: 'Otro',
 };
 export const categoryLabels: Record<Expense['category'], string> = {
-  INVESTMENT: 'Inversión inicial', FINANCING: 'Cuota de financiación',
+  DEPOSIT_REFUND: 'Devolución de fianza', INVESTMENT: 'Inversión inicial', FINANCING: 'Cuota de financiación',
   REPAIR: 'Reparación', MAINTENANCE: 'Mantenimiento', TAXES: 'Impuestos',
   UTILITIES: 'Suministros', INSURANCE: 'Seguro', CLEANING: 'Limpieza',
   COMMISSION: 'Comisión', LEGAL: 'Gastos legales', ADMINISTRATION: 'Administración', OTHER: 'Otro',

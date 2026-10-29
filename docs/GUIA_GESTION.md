@@ -25,7 +25,7 @@ La ficha diferencia:
 - Resultado real del intervalo elegido.
 - Previsión de los próximos doce meses y media mensual, según las reglas recurrentes.
 
-Las fianzas no son rendimiento del alquiler. Los gastos de categoría **Inversión inicial** y **Cuota de financiación** afectan a la caja pero no al resultado operativo. Los impuestos personales y la revalorización del inmueble no se estiman. Los costes iniciales vacíos se consideran cero; sin precio de compra no se inventa un porcentaje de rentabilidad.
+Las fianzas no son rendimiento del alquiler. Al devolverlas, usar la categoría **Devolución de fianza**: así tampoco se resta su devolución del rendimiento ni de la caja disponible del propietario. El gráfico general conserva tanto su entrada como su salida. Los gastos de categoría **Inversión inicial** y **Cuota de financiación** afectan a la caja pero no al resultado operativo. Los impuestos personales y la revalorización del inmueble no se estiman. Los costes iniciales vacíos se consideran cero; sin precio de compra no se inventa un porcentaje de rentabilidad.
 
 El dashboard de ingresos/gastos conserva sus totales, gráfico y proporción. La rentabilidad sobre inversión está en la ficha y usa una base de cálculo diferente.
 

@@ -17,7 +17,7 @@ import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
 import { reportApi } from '@/lib/api';
 
-const categories = ['REPAIR', 'MAINTENANCE', 'TAXES', 'UTILITIES', 'INSURANCE', 'CLEANING', 'COMMISSION', 'LEGAL', 'ADMINISTRATION', 'INVESTMENT', 'FINANCING', 'OTHER'] as const;
+const categories = ['REPAIR', 'MAINTENANCE', 'TAXES', 'UTILITIES', 'INSURANCE', 'CLEANING', 'COMMISSION', 'LEGAL', 'ADMINISTRATION', 'INVESTMENT', 'FINANCING', 'DEPOSIT_REFUND', 'OTHER'] as const;
 
 export default function ExpensesPage() {
   const [items, setItems] = useState<Expense[]>([]);
