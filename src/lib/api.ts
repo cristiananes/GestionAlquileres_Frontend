@@ -24,6 +24,14 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(response => response, error => {
+  if (typeof window !== 'undefined' && error.response?.status === 401 && localStorage.getItem('token')) {
+    localStorage.removeItem('token');
+    window.dispatchEvent(new Event('gestion-alquiler-session'));
+  }
+  return Promise.reject(error);
+});
+
 export const propertyApi = {
   getAll: (archived = false) => api.get<Property[]>('/properties', { params: { archived } }).then(r => r.data),
   updateInvestment: (id: number, values: { purchasePrice?: number | null; purchaseCosts?: number | null; renovationCosts?: number | null; furnitureCosts?: number | null; cashInvested?: number | null }) => api.put<Property>(`/properties/${id}/investment`, values).then(r => r.data),
