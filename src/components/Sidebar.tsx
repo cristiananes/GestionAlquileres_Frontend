@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/context/SidebarContext';
-import { LayoutDashboard, Building2, Euro, TrendingDown, Calendar, CheckSquare, Menu, X, Sun, Moon, Mail, ThumbsUp, LogOut } from 'lucide-react';
+import { Repeat, Archive, LayoutDashboard, Building2, Euro, TrendingDown, Calendar, CheckSquare, Menu, X, Sun, Moon, Mail, ThumbsUp, LogOut } from 'lucide-react';
 import { useDarkMode } from '@/context/DarkModeContext';
 import { useAuth } from '@/context/AuthContext';
 
@@ -12,6 +12,8 @@ const links = [
   { href: '/properties', label: 'Propiedades', icon: Building2 },
   { href: '/incomes', label: 'Ingresos', icon: Euro },
   { href: '/expenses', label: 'Gastos', icon: TrendingDown },
+  { href: '/recurrences', label: 'Recurrencias y cobros', icon: Repeat },
+  { href: '/archive', label: 'Archivados', icon: Archive },
   { href: '/calendar', label: 'Calendario', icon: Calendar },
   { href: '/tasks', label: 'Tareas', icon: CheckSquare },
   { href: '/contact', label: 'Contacto', icon: Mail },

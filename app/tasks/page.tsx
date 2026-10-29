@@ -1,5 +1,8 @@
 'use client';
 
+import { useSaveAction } from '@/hooks/useSaveAction';
+import { Notice } from '@/components/Fields';
+
 import { useEffect, useState } from 'react';
 import { priorityLabels, propertyLabel } from '@/lib/presentation';
 import { taskApi, propertyApi } from '@/lib/api';
@@ -29,24 +32,25 @@ export default function TasksPage() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => { setEditing(null); setForm({ propertyId: null, title: '', description: '', completed: false, dueDate: '', priority: 'MEDIUM' }); setModalOpen(true); };
-  const openEdit = (item: Task) => { setEditing(item); setForm({ propertyId: item.propertyId, title: item.title, description: item.description || '', completed: item.completed, dueDate: item.dueDate || '', priority: item.priority }); setModalOpen(true); };
+  const openCreate = () => { saveAction.reset(); setEditing(null); setForm({ propertyId: null, title: '', description: '', completed: false, dueDate: '', priority: 'MEDIUM' }); setModalOpen(true); };
+  const openEdit = (item: Task) => { saveAction.reset(); setEditing(item); setForm({ propertyId: item.propertyId, title: item.title, description: item.description || '', completed: item.completed, dueDate: item.dueDate || '', priority: item.priority }); setModalOpen(true); };
 
-  const save = async () => {
+  const saveAction = useSaveAction();
+  const save = () => saveAction.run(async () => {
     if (editing) await taskApi.update(editing.id, form);
     else await taskApi.create(form);
     setModalOpen(false);
     load();
-  };
+  });
 
-  const remove = async (id: number) => {
-    if (confirm('¿Eliminar esta tarea?')) { await taskApi.delete(id); load(); }
-  };
+  const remove = (id: number) => saveAction.run(async () => {
+    if (confirm('¿Archivar esta tarea?')) { await taskApi.delete(id); load(); }
+  });
 
-  const toggle = async (id: number) => {
+  const toggle = (id: number) => saveAction.run(async () => {
     await taskApi.toggle(id);
     load();
-  };
+  });
 
   const filtered = filter === 'all' ? items : items.filter(t => filter === 'done' ? t.completed : !t.completed);
 
@@ -59,6 +63,7 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-4">
+      {saveAction.error && <Notice>{saveAction.error}</Notice>}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Tareas</h1>
         <button onClick={openCreate} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shrink-0">
@@ -97,7 +102,7 @@ export default function TasksPage() {
           { key: 'actions', label: 'Acción', render: (item) => (
             <div className="flex gap-1">
               <button aria-label="Editar" title="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
-              <button aria-label="Eliminar" title="Eliminar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+              <button aria-label="Archivar" title="Archivar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           )},
         ]}
@@ -124,14 +129,14 @@ export default function TasksPage() {
             </div>
             <div className="flex justify-end gap-1 pt-1 border-t">
               <button aria-label="Editar" title="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
-              <button aria-label="Eliminar" title="Eliminar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
+              <button aria-label="Archivar" title="Archivar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           </>
         )}
       />
 
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? 'Editar tarea' : 'Nueva tarea'}>
-        <div className="space-y-4">
+        <form aria-busy={saveAction.saving} onSubmit={e => { e.preventDefault(); void save(); }} className="space-y-4">
           <div>
             <label htmlFor="tasks-field-1" className="block text-sm font-medium mb-1">Título</label>
             <input id="tasks-field-1" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" required />
@@ -159,11 +164,12 @@ export default function TasksPage() {
               <input id="tasks-field-5" type="date" value={form.dueDate} onChange={e => setForm({ ...form, dueDate: e.target.value })} className="w-full border rounded-lg px-3 py-2 text-sm" />
             </div>
           </div>
+          {saveAction.error && <Notice>{saveAction.error}</Notice>}
           <div className="flex justify-end gap-2 pt-2 border-t dark:border-gray-700">
-            <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
-            <button onClick={save} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">Guardar</button>
+            <button type="button" disabled={saveAction.saving} onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm border dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700">Cancelar</button>
+            <button type="submit" disabled={saveAction.saving} className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700">{saveAction.saving ? 'Guardando…' : 'Guardar'}</button>
           </div>
-        </div>
+        </form>
       </Modal>
     </div>
   );
