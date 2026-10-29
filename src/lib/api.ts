@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { requiredBackendFeature, requireBackendFeature, confirmedArchivedEntries } from '@/lib/backend-compatibility';
 import type {
   Property, PropertyForm,
   Income, IncomeForm,
@@ -14,13 +15,23 @@ const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api',
 });
 
-api.interceptors.request.use((config) => {
+// Coalesce only simultaneous probes; never cache a failed deployment check or reuse
+// an earlier positive check for a later destructive request after a server rollback.
+let capabilitiesInFlight: Promise<unknown> | null = null;
+function readCapabilities(): Promise<unknown> {
+  if (!capabilitiesInFlight) capabilitiesInFlight = api.get('/capabilities').then(r => r.data).finally(() => { capabilitiesInFlight = null; });
+  return capabilitiesInFlight;
+}
+
+api.interceptors.request.use(async (config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+  const feature = requiredBackendFeature(config.url || '', config.method, config.params?.archived);
+  if (feature) await requireBackendFeature(readCapabilities, feature);
   return config;
 });
 
@@ -133,7 +144,7 @@ export const documentApi = {
 };
 export type ArchiveKind = 'properties' | 'incomes' | 'expenses' | 'tasks' | 'calendar-events' | 'recurrences' | 'leases' | 'documents';
 export const archiveApi = {
-  list: (kind: ArchiveKind) => api.get<Array<{id: number; name?: string; title?: string; description?: string; propertyName?: string}>>(`/${kind}`, { params: { archived: true } }).then(r => r.data),
+  list: (kind: ArchiveKind) => api.get<unknown>(`/${kind}`, { params: { archived: true } }).then(r => confirmedArchivedEntries(r.data)),
   archive: (kind: ArchiveKind, id: number) => api.delete(`/${kind}/${id}`),
   restore: (kind: ArchiveKind, id: number) => api.post(`/${kind}/${id}/restore`),
 };
