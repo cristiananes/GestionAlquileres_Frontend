@@ -122,7 +122,7 @@ export default function ExpensesPage() {
           </select>
         </label>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-300" aria-live="polite">{filtered.length} registros · Total: {formatCurrency(filtered.reduce((sum, item) => sum + item.amount, 0))}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-300" aria-live="polite">{filtered.length} {filtered.length === 1 ? 'registro' : 'registros'} · Total: {formatCurrency(filtered.reduce((sum, item) => sum + item.amount, 0))}</p>
 
       {loadError && <div role="alert" className="text-sm text-red-600 dark:text-red-400">{loadError} <button onClick={load} className="underline">Reintentar</button></div>}
       <ResponsiveTable
