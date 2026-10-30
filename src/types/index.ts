@@ -43,6 +43,7 @@ export interface PropertyForm {
 }
 
 export interface Income {
+  utilityShareId?: number | null;
   occurrenceId?: number | null;
   archived?: boolean;
   id: number;
@@ -68,6 +69,7 @@ export interface IncomeForm {
 }
 
 export interface Expense {
+  utilityBillId?: number | null;
   occurrenceId?: number | null;
   archived?: boolean;
   id: number;

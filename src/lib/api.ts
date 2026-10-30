@@ -163,7 +163,7 @@ export const utilityApi = {
     if (file) body.append('file', file);
     return api.post<UtilityBill>('/utility-bills', body).then(r => r.data);
   },
-  pay: (billId: number, shareId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number }) => api.post<UtilityBill>(`/utility-bills/${billId}/shares/${shareId}/payments`, data).then(r => r.data),
-  expense: (billId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number }) => api.post<UtilityBill>(`/utility-bills/${billId}/expense`, data).then(r => r.data),
+  pay: (billId: number, shareId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number; paymentMethod?: Income['paymentMethod'] }) => api.post<UtilityBill>(`/utility-bills/${billId}/shares/${shareId}/payments`, data).then(r => r.data),
+  expense: (billId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number; paymentMethod?: Income['paymentMethod'] }) => api.post<UtilityBill>(`/utility-bills/${billId}/expense`, data).then(r => r.data),
   archive: (id: number, archived: boolean) => api.post(`/utility-bills/${id}/${archived ? 'archive' : 'restore'}`),
 };
