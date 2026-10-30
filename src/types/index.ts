@@ -51,7 +51,7 @@ export interface Income {
   amount: number;
   description: string;
   incomeDate: string;
-  incomeType: 'RENT' | 'DEPOSIT' | 'LATE_FEE' | 'OTHER';
+  incomeType: 'RENT' | 'UTILITY_REIMBURSEMENT' | 'DEPOSIT' | 'LATE_FEE' | 'OTHER';
   paymentMethod: 'CASH' | 'TRANSFER' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'CHECK' | 'OTHER';
   createdAt: string;
   updatedAt: string;
@@ -63,7 +63,7 @@ export interface IncomeForm {
   amount: number | null;
   description: string;
   incomeDate: string;
-  incomeType: 'RENT' | 'DEPOSIT' | 'LATE_FEE' | 'OTHER';
+  incomeType: 'RENT' | 'UTILITY_REIMBURSEMENT' | 'DEPOSIT' | 'LATE_FEE' | 'OTHER';
   paymentMethod: 'CASH' | 'TRANSFER' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'CHECK' | 'OTHER';
 }
 
@@ -170,7 +170,7 @@ export interface Occurrence {
   status: 'PENDING' | 'OVERDUE' | 'PARTIAL' | 'PAID';
 }
 export interface ActualReturn {
-  from: string | null; to: string | null; grossIncome: number; deposits: number;
+  from: string | null; to: string | null; grossIncome: number; deposits: number; reimbursements?: number;
   operatingExpenses: number; netIncome: number; cashFlow: number;
   grossReturn: number | null; netReturn: number | null; cashReturn: number | null;
 }
@@ -189,4 +189,27 @@ export interface Lease extends LeaseForm { id: number; propertyId: number; recur
 export interface PropertyDocument {
   id: number; propertyId: number; incomeId: number | null; expenseId: number | null;
   filename: string; contentType: string; size: number; archived: boolean; createdAt: string;
+}
+
+export interface UtilityRecipient {
+  name: string; room: string; email: string; phone: string; roomNumber: number | null;
+  from: string | null; to: string | null; percent: number | null; owner: boolean;
+}
+export interface UtilityBillForm {
+  propertyId: number; clientRequestId: string; supply: string; provider: string; reference: string;
+  amount: number; periodFrom: string; periodTo: string; dueDate: string;
+  method: 'EQUAL' | 'PERCENT' | 'DAYS'; roomCount: number; vacancy: 'OWNER' | 'OCCUPANTS'; recipients: UtilityRecipient[];
+}
+export interface UtilityPart { recipient: UtilityRecipient; amount: number }
+export interface UtilityShare extends UtilityRecipient {
+  id: number; amount: number; paid: number; pending: number;
+  status: 'OWNER' | 'PAID' | 'PARTIAL' | 'OVERDUE' | 'PENDING';
+  payments: { incomeId: number; amount: number; date: string }[];
+}
+export interface UtilityBill {
+  id: number; propertyId: number; propertyName: string; supply: string; provider: string; reference: string;
+  amount: number; periodFrom: string; periodTo: string; dueDate: string;
+  method: UtilityBillForm['method']; roomCount: number; vacancy: UtilityBillForm['vacancy'];
+  documentId: number | null; filename: string | null; archived: boolean;
+  expenseId: number | null; expensePaid: boolean; shares: UtilityShare[];
 }

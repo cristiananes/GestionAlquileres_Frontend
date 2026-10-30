@@ -11,7 +11,7 @@ export function formatBalanceRatio(totalIncomes: number, balance: number) {
 }
 
 export const incomeLabels: Record<Income['incomeType'], string> = {
-  RENT: 'Alquiler', DEPOSIT: 'Fianza', LATE_FEE: 'Recargo por demora', OTHER: 'Otro',
+  RENT: 'Alquiler', UTILITY_REIMBURSEMENT: 'Reembolso de suministros', DEPOSIT: 'Fianza', LATE_FEE: 'Recargo por demora', OTHER: 'Otro',
 };
 export const paymentLabels: Record<Income['paymentMethod'], string> = {
   CASH: 'Efectivo', TRANSFER: 'Transferencia', CREDIT_CARD: 'Tarjeta de crédito',

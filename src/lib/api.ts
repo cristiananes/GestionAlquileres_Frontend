@@ -8,6 +8,7 @@ import type {
   Task, TaskForm,
   DashboardSummary,
   InvestmentSummary, RecurringRule, RecurringRuleForm, Occurrence, Lease, LeaseForm, PropertyDocument,
+  UtilityBill, UtilityBillForm, UtilityPart,
   ContactMessageForm
 } from '@/types';
 
@@ -153,3 +154,16 @@ export function downloadBlob(blob: Blob, filename: string) {
   anchor.href = url; anchor.download = filename; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export const utilityApi = {
+  list: (propertyId: number, archived = false) => api.get<UtilityBill[]>('/utility-bills', { params: { propertyId, archived } }).then(r => r.data),
+  preview: (data: UtilityBillForm) => api.post<UtilityPart[]>('/utility-bills/preview', data).then(r => r.data),
+  create: (data: UtilityBillForm, file: File | null) => {
+    const body = new FormData(); body.append('request', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    if (file) body.append('file', file);
+    return api.post<UtilityBill>('/utility-bills', body).then(r => r.data);
+  },
+  pay: (billId: number, shareId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number }) => api.post<UtilityBill>(`/utility-bills/${billId}/shares/${shareId}/payments`, data).then(r => r.data),
+  expense: (billId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number }) => api.post<UtilityBill>(`/utility-bills/${billId}/expense`, data).then(r => r.data),
+  archive: (id: number, archived: boolean) => api.post(`/utility-bills/${id}/${archived ? 'archive' : 'restore'}`),
+};

@@ -17,7 +17,7 @@ import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
 import { reportApi } from '@/lib/api';
 
-const incomeTypes = ['RENT', 'DEPOSIT', 'LATE_FEE', 'OTHER'] as const;
+const incomeTypes = ['RENT', 'UTILITY_REIMBURSEMENT', 'DEPOSIT', 'LATE_FEE', 'OTHER'] as const;
 const paymentMethods = ['CASH', 'TRANSFER', 'CREDIT_CARD', 'DEBIT_CARD', 'CHECK', 'OTHER'] as const;
 
 export default function IncomesPage() {
