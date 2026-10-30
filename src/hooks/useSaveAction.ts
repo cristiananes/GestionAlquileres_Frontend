@@ -1,7 +1,9 @@
 'use client';
 import { useRef, useState } from 'react';
 import { isAxiosError } from 'axios';
+import { BackendCompatibilityError } from '@/lib/backend-compatibility';
 export function errorMessage(error: unknown): string {
+  if (error instanceof BackendCompatibilityError) return error.message;
   if (isAxiosError(error)) {
     const data = error.response?.data;
     if (Array.isArray(data?.details)) return data.details.join('. ');
