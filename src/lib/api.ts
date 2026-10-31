@@ -9,6 +9,7 @@ import type {
   DashboardSummary,
   InvestmentSummary, RecurringRule, RecurringRuleForm, Occurrence, Lease, LeaseForm, PropertyDocument,
   UtilityBill, UtilityBillForm, UtilityPart,
+  Room, ManagementSettings, OwnerSettlement, SettlementRequest, RentalScope,
   ContactMessageForm
 } from '@/types';
 
@@ -132,6 +133,7 @@ export const recurrenceApi = {
   finish: (id: number) => api.post(`/recurrences/${id}/finish`),
 };
 export const leaseApi = {
+  occupancy: (id: number, data: { rentalScope: RentalScope; roomId: number | null; from: string; to: string | null }) => api.put<Lease>(`/leases/${id}/occupancy`, data).then(r => r.data),
   list: (propertyId: number, archived = false) => api.get<Lease[]>(`/properties/${propertyId}/leases`, { params: { archived } }).then(r => r.data),
   create: (propertyId: number, data: LeaseForm) => api.post<Lease>(`/properties/${propertyId}/leases`, data).then(r => r.data),
 };
@@ -166,4 +168,20 @@ export const utilityApi = {
   pay: (billId: number, shareId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number; paymentMethod?: Income['paymentMethod'] }) => api.post<UtilityBill>(`/utility-bills/${billId}/shares/${shareId}/payments`, data).then(r => r.data),
   expense: (billId: number, data: { amount: number; date: string; clientRequestId: string; movementId?: number; paymentMethod?: Income['paymentMethod'] }) => api.post<UtilityBill>(`/utility-bills/${billId}/expense`, data).then(r => r.data),
   archive: (id: number, archived: boolean) => api.post(`/utility-bills/${id}/${archived ? 'archive' : 'restore'}`),
+};
+
+export const roomApi = {
+  list: (propertyId: number, archived = false, on?: string) => api.get<Room[]>(`/properties/${propertyId}/rooms`, { params: { archived, on } }).then(r => r.data),
+  create: (propertyId: number, data: { name: string; number: number }) => api.post<Room>(`/properties/${propertyId}/rooms`, data).then(r => r.data),
+  archive: (propertyId: number, id: number, archived: boolean) => api.post(`/properties/${propertyId}/rooms/${id}/${archived ? 'archive' : 'restore'}`),
+};
+export const settlementApi = {
+  settings: (propertyId: number) => api.get<ManagementSettings | null>(`/properties/${propertyId}/management`).then(r => r.data || null),
+  saveSettings: (propertyId: number, data: ManagementSettings) => api.put<ManagementSettings>(`/properties/${propertyId}/management`, data).then(r => r.data),
+  list: (propertyId: number) => api.get<OwnerSettlement[]>(`/properties/${propertyId}/settlements`).then(r => r.data),
+  preview: (data: SettlementRequest) => api.post<OwnerSettlement>('/settlements/preview', data).then(r => r.data),
+  create: (data: SettlementRequest) => api.post<OwnerSettlement>('/settlements', data).then(r => r.data),
+  paid: (id: number, date: string) => api.post<OwnerSettlement>(`/settlements/${id}/paid`, {date}).then(r => r.data),
+  cancel: (id: number) => api.post<OwnerSettlement>(`/settlements/${id}/cancel`).then(r => r.data),
+  pdf: (id: number) => api.get<Blob>(`/settlements/${id}/pdf`, { responseType: 'blob' }).then(r => r.data),
 };
