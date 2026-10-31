@@ -1,15 +1,21 @@
 'use client';
-import { useState } from 'react';
-import type { LeaseForm as LeaseData } from '@/types';
-import { leaseApi } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import type { LeaseForm as LeaseData, Room } from '@/types';
+import { leaseApi, roomApi } from '@/lib/api';
 import { todayLocal } from '@/lib/presentation';
-import { useSaveAction } from '@/hooks/useSaveAction';
+import { errorMessage, useSaveAction } from '@/hooks/useSaveAction';
 import { Field, Notice, inputClass, primaryClass, secondaryClass } from '@/components/Fields';
 export default function LeaseForm({ propertyId, hasRentRule, onSaved, onCancel }: { propertyId: number; hasRentRule: boolean; onSaved: () => void; onCancel: () => void }) {
-  const [form, setForm] = useState<LeaseData>({ tenantName: '', tenantEmail: '', tenantPhone: '', startDate: todayLocal(), endDate: null, monthlyRent: 0, depositAmount: null, paymentDay: 1, generateRecurrence: !hasRentRule });
+  const [form, setForm] = useState<LeaseData>({ rentalScope: 'ENTIRE_PROPERTY', roomId: null, tenantName: '', tenantEmail: '', tenantPhone: '', startDate: todayLocal(), endDate: null, monthlyRent: 0, depositAmount: null, paymentDay: 1, generateRecurrence: !hasRentRule });
+  const [rooms, setRooms] = useState<Room[]>([]); const [roomError, setRoomError] = useState('');
+  useEffect(() => { let active = true; roomApi.list(propertyId).then(r => { if(active) setRooms(r); }).catch(e => { if(active) setRoomError(errorMessage(e)); }); return () => { active = false; }; }, [propertyId]);
   const save = useSaveAction();
   const set = <K extends keyof LeaseData>(key: K, value: LeaseData[K]) => setForm({ ...form, [key]: value });
   return <form aria-busy={save.saving} className="space-y-4" onSubmit={e => { e.preventDefault(); void save.run(async () => { await leaseApi.create(propertyId, { ...form, clientRequestId: save.requestId() }); onSaved(); }); }}>
+    <Field label="Qué se alquila"><select className={inputClass} value={form.rentalScope} onChange={e => setForm({ ...form, rentalScope: e.target.value as LeaseData['rentalScope'], roomId: null })}><option value="ENTIRE_PROPERTY">Piso completo</option><option value="ROOM">Una habitación</option></select></Field>
+    {form.rentalScope === 'ROOM' && <Field label="Habitación del contrato"><select className={inputClass} required value={form.roomId ?? ''} onChange={e => set('roomId', Number(e.target.value))}><option value="">Selecciona una habitación</option>{rooms.map(r => <option key={r.id} value={r.id}>#{r.number} · {r.name}</option>)}</select><p className="text-xs">Crea las habitaciones en la ficha de la propiedad antes de asignarlas.</p></Field>}
+    {roomError && <Notice>{roomError}</Notice>}
+    <p className="text-xs">La estancia inicial usa las fechas del contrato, ambas incluidas. Después puedes ajustarla desde Habitaciones y ocupación. Se comprueba que no se solape con otros contratos asignados.</p>
     <Field label="Nombre del inquilino"><input className={inputClass} required maxLength={200} value={form.tenantName} onChange={e => set('tenantName',e.target.value)} /></Field>
     <Field label="Email (opcional)"><input className={inputClass} type="email" value={form.tenantEmail} onChange={e => set('tenantEmail',e.target.value)} /></Field>
     <Field label="Teléfono (opcional)"><input className={inputClass} type="tel" maxLength={40} value={form.tenantPhone} onChange={e => set('tenantPhone',e.target.value)} /></Field>

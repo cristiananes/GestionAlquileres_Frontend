@@ -69,6 +69,7 @@ export interface IncomeForm {
 }
 
 export interface Expense {
+  ownerSettlementId?: number | null;
   utilityBillId?: number | null;
   occurrenceId?: number | null;
   archived?: boolean;
@@ -183,11 +184,13 @@ export interface InvestmentSummary {
     monthlyGross: number; monthlyNet: number; grossAnnualReturn: number | null; netAnnualReturn: number | null;
     grossMonthlyReturn: number | null; netMonthlyReturn: number | null; };
 }
+export type RentalScope = 'UNASSIGNED' | 'ENTIRE_PROPERTY' | 'ROOM';
 export interface LeaseForm {
+  rentalScope?: RentalScope; roomId?: number | null; occupancyFrom?: string | null; occupancyTo?: string | null;
   tenantName: string; tenantEmail: string; tenantPhone: string; startDate: string; endDate: string | null;
   monthlyRent: number; depositAmount: number | null; paymentDay: number; generateRecurrence: boolean; clientRequestId?: string;
 }
-export interface Lease extends LeaseForm { id: number; propertyId: number; recurringRuleId: number | null; archived: boolean }
+export interface Lease extends LeaseForm { roomName?: string | null; roomNumber?: number | null; id: number; propertyId: number; recurringRuleId: number | null; archived: boolean }
 export interface PropertyDocument {
   id: number; propertyId: number; incomeId: number | null; expenseId: number | null;
   filename: string; contentType: string; size: number; archived: boolean; createdAt: string;
@@ -200,7 +203,7 @@ export interface UtilityRecipient {
 export interface UtilityBillForm {
   propertyId: number; clientRequestId: string; supply: string; provider: string; reference: string;
   amount: number; periodFrom: string; periodTo: string; dueDate: string;
-  method: 'EQUAL' | 'PERCENT' | 'DAYS'; roomCount: number; vacancy: 'OWNER' | 'OCCUPANTS'; recipients: UtilityRecipient[];
+  method: 'EQUAL' | 'PERCENT' | 'DAYS'; roomNumbers?: number[]; roomCount: number; vacancy: 'OWNER' | 'OCCUPANTS'; recipients: UtilityRecipient[];
 }
 export interface UtilityPart { recipient: UtilityRecipient; amount: number }
 export interface UtilityShare extends UtilityRecipient {
@@ -215,3 +218,9 @@ export interface UtilityBill {
   documentId: number | null; filename: string | null; archived: boolean;
   expenseId: number | null; expensePaid: boolean; shares: UtilityShare[];
 }
+
+export interface Room { id: number; propertyId: number; name: string; number: number; archived: boolean; on: string; status: 'ARCHIVED' | 'OCCUPIED' | 'AVAILABLE'; stays: {leaseId: number; tenantName: string; from: string; to: string | null; entireProperty: boolean}[] }
+export interface ManagementSettings { ownerName: string; ownerEmail: string; feeMode: 'PERCENT_RENT' | 'FIXED'; feeRate: number; taxRate: number; collectionMode: 'MANAGER' | 'OWNER' }
+export interface SettlementRequest { propertyId: number; from: string; to: string; incomeIds: number[]; expenseIds: number[]; clientRequestId: string; previewToken?: string }
+export interface SettlementLine { kind: 'INCOME' | 'EXPENSE'; movementId: number; date: string; description: string; amount: number }
+export interface OwnerSettlement extends ManagementSettings { id: number | null; propertyId: number; propertyName: string; from: string; to: string; totalIncome: number; totalExpense: number; feeBase: number; feeNet: number; feeTax: number; feeTotal: number; netToOwner: number; status: 'PREVIEW' | 'CONFIRMED' | 'PAID' | 'CANCELLED'; paidDate: string | null; feeExpenseId: number | null; lines: SettlementLine[]; reviewToken: string | null }

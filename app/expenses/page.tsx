@@ -106,7 +106,7 @@ export default function ExpensesPage() {
           { key: 'amount', label: 'Importe', render: (item) => <span className="font-medium text-red-600 dark:text-red-400">{formatCurrency(item.amount)}</span> },
           { key: 'actions', label: 'Acción', render: (item) => (
             <div className="flex gap-1">
-              <button disabled={!!item.occurrenceId || !!item.utilityBillId} title={item.utilityBillId ? "Movimiento de un recibo: gestionar desde Suministros" : item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button disabled={!!item.occurrenceId || !!item.utilityBillId || !!item.ownerSettlementId} title={item.ownerSettlementId ? "Honorarios vinculados: corregir desde Liquidaciones" : item.utilityBillId ? "Movimiento de un recibo: gestionar desde Suministros" : item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
               <button aria-label="Archivar" title="Archivar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           )},
@@ -125,7 +125,7 @@ export default function ExpensesPage() {
               <span className="bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded-full">{categoryLabels[item.category]}</span>
             </div>
             <div className="flex justify-end gap-1 pt-1 border-t">
-              <button disabled={!!item.occurrenceId || !!item.utilityBillId} title={item.utilityBillId ? "Movimiento de un recibo: gestionar desde Suministros" : item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button disabled={!!item.occurrenceId || !!item.utilityBillId || !!item.ownerSettlementId} title={item.ownerSettlementId ? "Honorarios vinculados: corregir desde Liquidaciones" : item.utilityBillId ? "Movimiento de un recibo: gestionar desde Suministros" : item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
               <button aria-label="Archivar" title="Archivar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           </>

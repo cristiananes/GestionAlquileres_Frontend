@@ -1,8 +1,8 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import type { Property, Lease, Income, Expense, UtilityBill, UtilityShare } from '@/types';
-import { propertyApi, leaseApi, incomeApi, expenseApi, documentApi, utilityApi, downloadBlob } from '@/lib/api';
+import type { Property, Lease, Income, Expense, UtilityBill, UtilityShare, Room } from '@/types';
+import { propertyApi, leaseApi, incomeApi, expenseApi, documentApi, utilityApi, roomApi, downloadBlob } from '@/lib/api';
 import { errorMessage, useSaveAction } from '@/hooks/useSaveAction';
 import { formatCurrency, formatDate } from '@/lib/presentation';
 import { utilityMessage, utilityShareLinks } from '@/lib/utility-messages';
@@ -11,7 +11,7 @@ import Modal from '@/components/Modal';
 import UtilityBillForm from './UtilityBillForm';
 import UtilityPaymentForm from './UtilityPaymentForm';
 
-type Data = { bills: UtilityBill[]; leases: Lease[]; incomes: Income[]; expenses: Expense[] };
+type Data = { bills: UtilityBill[]; leases: Lease[]; incomes: Income[]; expenses: Expense[]; rooms: Room[] };
 type Selection = { type: 'new' } | { type: 'payment'; bill: UtilityBill; share: UtilityShare | null } | { type: 'message'; bill: UtilityBill; share: UtilityShare };
 const statuses = { OWNER: 'A tu cargo', PAID: 'Pagado', PARTIAL: 'Pago parcial', OVERDUE: 'Vencido', PENDING: 'Pendiente' };
 const methods = { EQUAL: 'Partes iguales', PERCENT: 'Porcentajes', DAYS: 'Habitación y días' };
@@ -36,8 +36,8 @@ export default function UtilityWorkspace({ propertyId }: { propertyId?: number }
   const load = useCallback(() => {
     const seq = ++sequence.current;
     if (!Number.isSafeInteger(id) || id <= 0) return Promise.resolve();
-    return Promise.all([utilityApi.list(id, archived), leaseApi.list(id), incomeApi.getAll({ propertyId: id }), expenseApi.getAll({ propertyId: id })])
-      .then(([bills, leases, incomes, expenses]) => { if (seq === sequence.current) { setData({ bills, leases, incomes, expenses }); setError(''); } })
+    return Promise.all([utilityApi.list(id, archived), leaseApi.list(id), incomeApi.getAll({ propertyId: id }), expenseApi.getAll({ propertyId: id }), roomApi.list(id)])
+      .then(([bills, leases, incomes, expenses, rooms]) => { if (seq === sequence.current) { setData({ bills, leases, incomes, expenses, rooms }); setError(''); } })
       .catch(e => { if (seq === sequence.current) { setData(null); setError(errorMessage(e)); } });
   }, [id, archived]);
   useEffect(() => { void load(); const current = sequence; return () => { current.current++; }; }, [load]);
@@ -60,7 +60,7 @@ export default function UtilityWorkspace({ propertyId }: { propertyId?: number }
       </article>)}
     </>}
     <Modal open={!!modal} onClose={() => setModal(null)} title={modal?.type === 'new' ? 'Nuevo recibo y reparto' : modal?.type === 'message' ? 'Revisar mensaje individual' : modal?.type === 'payment' && modal.share ? 'Registrar reembolso recibido' : 'Registrar gasto pagado'}>
-      {modal?.type === 'new' && data && property && <UtilityBillForm propertyId={id} leases={data.leases} bedrooms={property.bedrooms} onSaved={saved} onCancel={() => setModal(null)} />}
+      {modal?.type === 'new' && data && property && <UtilityBillForm propertyId={id} leases={data.leases} rooms={data.rooms} bedrooms={property.bedrooms} onSaved={saved} onCancel={() => setModal(null)} />}
       {modal?.type === 'payment' && data && <UtilityPaymentForm bill={modal.bill} share={modal.share} incomes={data.incomes} expenses={data.expenses} onSaved={saved} onCancel={() => setModal(null)} />}
       {modal?.type === 'message' && <ShareMessage bill={modal.bill} share={modal.share} />}
     </Modal>

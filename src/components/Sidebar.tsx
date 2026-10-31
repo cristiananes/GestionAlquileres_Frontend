@@ -12,6 +12,7 @@ const links = [
   { href: '/properties', label: 'Propiedades', icon: Building2 },
   { href: '/incomes', label: 'Ingresos', icon: Euro },
   { href: '/expenses', label: 'Gastos', icon: TrendingDown },
+  { href: '/settlements', label: 'Liquidaciones', icon: Euro },
   { href: '/utilities', label: 'Recibos y suministros', icon: Euro },
   { href: '/recurrences', label: 'Recurrencias y cobros', icon: Repeat },
   { href: '/archive', label: 'Archivados', icon: Archive },

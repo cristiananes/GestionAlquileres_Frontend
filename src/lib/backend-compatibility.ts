@@ -8,6 +8,8 @@ export class BackendCompatibilityError extends Error {
 export function requiredBackendFeature(url: string, method = 'get', archived?: unknown): string | null {
   const path = url.replace(/^https?:\/\/[^/]+/, '').split('?')[0].replace(/^\/api(?=\/)/, '');
   if (path === '/capabilities' || /^\/(auth(?:\/|$)|contact$|feedback$)/.test(path)) return null;
+  if ((/^\/properties\/\d+\/leases$/.test(path) && !['get','head','options'].includes(method.toLowerCase())) || /^\/properties\/\d+\/rooms(?:\/|$)/.test(path) || /^\/leases\/\d+\/occupancy$/.test(path)) return 'rooms';
+  if (/^\/properties\/\d+\/(management|settlements)(?:\/|$)/.test(path) || /^\/settlements(?:\/|$)/.test(path)) return 'owner-settlements';
   if (/^\/utility-bills(?:\/|$)/.test(path)) return 'utility-bills';
   if (method.toLowerCase() === 'delete' || /\/(?:restore|archive)$/.test(path)) return 'soft-archive';
   if (!['get', 'head', 'options'].includes(method.toLowerCase())) return 'safe-writes';
