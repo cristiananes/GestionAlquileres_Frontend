@@ -17,7 +17,7 @@ import { SkeletonTable } from '@/components/Skeleton';
 import { format } from 'date-fns';
 import { reportApi } from '@/lib/api';
 
-const incomeTypes = ['RENT', 'DEPOSIT', 'LATE_FEE', 'OTHER'] as const;
+const incomeTypes = ['RENT', 'UTILITY_REIMBURSEMENT', 'DEPOSIT', 'LATE_FEE', 'OTHER'] as const;
 const paymentMethods = ['CASH', 'TRANSFER', 'CREDIT_CARD', 'DEBIT_CARD', 'CHECK', 'OTHER'] as const;
 
 export default function IncomesPage() {
@@ -101,14 +101,14 @@ export default function IncomesPage() {
       <ResponsiveTable
         columns={[
           { key: 'date', label: 'Fecha', render: (item) => format(new Date(item.incomeDate), 'dd/MM/yyyy') },
-          { key: 'desc', label: 'Descripción', render: (item) => <span>{item.description}<span className="block text-xs text-gray-500 dark:text-gray-400">{item.occurrenceId ? 'Recurrente confirmado' : 'Puntual'}</span></span> },
+          { key: 'desc', label: 'Descripción', render: (item) => <span>{item.description}<span className="block text-xs text-gray-500 dark:text-gray-400">{item.utilityShareId ? 'Vinculado a un recibo de suministros' : item.occurrenceId ? 'Recurrente confirmado' : 'Puntual'}</span></span> },
           { key: 'property', label: 'Propiedad', render: (item) => <span className="text-gray-600 dark:text-gray-300">{item.propertyName || '-'}</span> },
           { key: 'type', label: 'Tipo', render: (item) => <span className="bg-blue-50 text-blue-700 text-xs px-2 py-0.5 rounded-full">{incomeLabels[item.incomeType]}</span> },
           { key: 'method', label: 'Método', render: (item) => <span className="text-gray-600 dark:text-gray-300">{paymentLabels[item.paymentMethod] || '-'}</span> },
           { key: 'amount', label: 'Importe', render: (item) => <span className="font-medium text-green-700 dark:text-green-400">{formatCurrency(item.amount)}</span> },
           { key: 'actions', label: 'Acción', render: (item) => (
             <div className="flex gap-1">
-              <button disabled={!!item.occurrenceId} title={item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button disabled={!!item.occurrenceId || !!item.utilityShareId} title={item.utilityShareId ? "Movimiento de un recibo: gestionar desde Suministros" : item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
               <button aria-label="Archivar" title="Archivar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           )},
@@ -127,7 +127,7 @@ export default function IncomesPage() {
               <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full">{incomeLabels[item.incomeType]}</span>
             </div>
             <div className="flex justify-end gap-1 pt-1 border-t">
-              <button disabled={!!item.occurrenceId} title={item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
+              <button disabled={!!item.occurrenceId || !!item.utilityShareId} title={item.utilityShareId ? "Movimiento de un recibo: gestionar desde Suministros" : item.occurrenceId ? "Pago de una recurrencia: archiva para corregirlo" : "Editar"} aria-label="Editar" onClick={() => openEdit(item)} className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"><Pencil size={15} /></button>
               <button aria-label="Archivar" title="Archivar" onClick={() => remove(item.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 text-red-500 rounded-lg"><Trash2 size={15} /></button>
             </div>
           </>
